@@ -1,4 +1,4 @@
-import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals, WatchlistOption, NotificationItem } from './types'
+import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals, WatchlistOption, NotificationItem, MarketPulseItem } from './types'
 
 export const WATCHLIST_SUMMARY: WatchlistSummary = {
   name: 'My Swing Watchlist',
@@ -71,6 +71,37 @@ export const MOCK_NOTIFICATIONS: NotificationItem[] = [
   { id: 'n3', title: 'NVDA — Signal from Macro Pulse', time: '8m ago', type: 'breaking' },
   { id: 'n4', title: 'TSM earnings signal from Earnings Scout', time: '12m ago', type: 'info' },
   { id: 'n5', title: '3 new signals in Tech Focus', time: '18m ago', type: 'info' },
+]
+
+export const MARKET_PULSE_ITEMS: MarketPulseItem[] = [
+  {
+    id: 'pulse-1',
+    headline: 'Fed signals higher-for-longer; futures trim gains.',
+    oneLiner: 'Rate-cut expectations pushed out to late 2025; bond yields up, equity futures off session highs.',
+    time: '45m ago',
+    impact: 'rates',
+  },
+  {
+    id: 'pulse-2',
+    headline: 'Tighter chip export rules weigh on tech sentiment.',
+    oneLiner: 'New restrictions to secondary markets may pressure AI GPU shipments to China near term.',
+    time: '2h ago',
+    impact: 'sector',
+  },
+  {
+    id: 'pulse-3',
+    headline: 'Strong jobs data reinforces rate-cut delay; bond yields rise.',
+    oneLiner: 'Labor market resilience keeps Fed on hold; 10Y Treasury above 4.2%, weighing on growth names.',
+    time: '3h ago',
+    impact: 'macro',
+  },
+  {
+    id: 'pulse-4',
+    headline: 'AI capex outlook supports semis; Nasdaq outperforms.',
+    oneLiner: 'Hyperscaler and foundry commentary points to front-loaded demand; semis and software bid.',
+    time: '5h ago',
+    impact: 'futures',
+  },
 ]
 
 // Sparkline trend: ~24 points (e.g. hourly). Values normalized for display.

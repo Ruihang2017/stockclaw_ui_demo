@@ -137,3 +137,13 @@ export interface UserSettings {
   push: boolean
   breakingOnly: boolean
 }
+
+export type MarketPulseImpact = 'futures' | 'rates' | 'sector' | 'macro'
+
+export interface MarketPulseItem {
+  id: string
+  headline: string
+  oneLiner: string
+  time: string
+  impact?: MarketPulseImpact
+}

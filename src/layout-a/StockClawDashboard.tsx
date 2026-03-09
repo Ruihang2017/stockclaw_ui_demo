@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react'
 import { Header } from './components/Header'
 import { StatusStrip } from './components/StatusStrip'
 import { MarketContextStrip } from './components/MarketContextStrip'
+import { MarketPulseStrip } from './components/MarketPulseStrip'
 import { LeftPanel } from './components/LeftPanel'
 import { CenterPanel } from './components/CenterPanel'
 import { RightPanel } from './components/RightPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
-import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES } from './mockData'
+import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES, MARKET_PULSE_ITEMS } from './mockData'
 import type { FilterChipId, UserSettings, WatchlistTicker } from './types'
 
 export function StockClawDashboard() {
@@ -124,6 +125,7 @@ export function StockClawDashboard() {
         breakingCount={watchlistSummary.breakingCount}
       />
       <MarketContextStrip indexes={MARKET_INDEXES} />
+      <MarketPulseStrip items={MARKET_PULSE_ITEMS} />
       <div className="flex min-h-0 flex-1 flex-wrap">
         <LeftPanel
           summary={displaySummary}
