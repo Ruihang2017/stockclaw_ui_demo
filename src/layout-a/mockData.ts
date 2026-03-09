@@ -55,6 +55,16 @@ export const WATCHLIST_BY_ID: Record<string, { summary: WatchlistSummary; ticker
   tech: { summary: TECH_FOCUS_SUMMARY, tickers: TECH_FOCUS_TICKERS },
 }
 
+// Tickers that can be added to any watchlist (not in default swing/tech lists)
+export const ADDABLE_TICKERS: WatchlistTicker[] = [
+  { symbol: 'SPY', companyName: 'SPDR S&P 500 ETF', market: 'US', sector: 'ETF', signalCountToday: 0, lastSignalAt: '—', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 518.20, dailyChangePercent: 0.4 },
+  { symbol: 'QQQ', companyName: 'Invesco QQQ Trust', market: 'US', sector: 'ETF', signalCountToday: 1, lastSignalAt: '1h ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 455.80, dailyChangePercent: 0.9 },
+  { symbol: 'JPM', companyName: 'JPMorgan Chase', market: 'US', sector: 'Financials', signalCountToday: 2, lastSignalAt: '45m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 198.50, dailyChangePercent: 0.2 },
+  { symbol: 'DIS', companyName: 'Walt Disney Co', market: 'US', sector: 'Entertainment', signalCountToday: 1, lastSignalAt: '2h ago', sentimentBias: 'bearish', hasBreaking: false, currentPrice: 112.30, dailyChangePercent: -0.5 },
+  { symbol: 'NFLX', companyName: 'Netflix Inc', market: 'US', sector: 'Technology', signalCountToday: 2, lastSignalAt: '30m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 485.60, dailyChangePercent: 1.1 },
+  { symbol: 'COIN', companyName: 'Coinbase Global', market: 'US', sector: 'Financials', signalCountToday: 1, lastSignalAt: '1h ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 248.20, dailyChangePercent: 2.2 },
+]
+
 export const MOCK_NOTIFICATIONS: NotificationItem[] = [
   { id: 'n1', title: '2 new BREAKING signals in your watchlist', time: '2m ago', type: 'breaking' },
   { id: 'n2', title: 'Watchlist "My Swing Watchlist" updated', time: '5m ago', type: 'info' },
@@ -124,6 +134,12 @@ export const STOCK_PRICE_BY_SYMBOL: Record<string, StockPriceData> = {
   AVGO: { currentPrice: 168.75, dailyChange: 0.51, dailyChangePercent: 0.3, trend1D: trend1D(168.75, 0.3), trend5D: trend5D(168.75, 0.3), trend1M: trend1M(168.75, 0.3), volume: 3_800_000, relativeStrengthLabel: 'In line with SOX' },
   GOOGL: { currentPrice: 172.50, dailyChange: 1.54, dailyChangePercent: 0.9, trend1D: trend1D(172.50, 0.9), trend5D: trend5D(172.50, 0.9), trend1M: trend1M(172.50, 0.9), volume: 24_000_000, relativeStrengthLabel: 'In line with NDX' },
   INTC: { currentPrice: 42.18, dailyChange: -0.25, dailyChangePercent: -0.6, trend1D: trend1D(42.18, -0.6), trend5D: trend5D(42.18, -0.6), trend1M: trend1M(42.18, -0.6), volume: 38_000_000, relativeStrengthLabel: 'Underperforming SOX -0.4%' },
+  SPY: { currentPrice: 518.20, dailyChange: 2.08, dailyChangePercent: 0.4, trend1D: trend1D(518.20, 0.4), trend5D: trend5D(518.20, 0.4), trend1M: trend1M(518.20, 0.4), volume: 65_000_000, relativeStrengthLabel: 'S&P 500 ETF' },
+  QQQ: { currentPrice: 455.80, dailyChange: 4.06, dailyChangePercent: 0.9, trend1D: trend1D(455.80, 0.9), trend5D: trend5D(455.80, 0.9), trend1M: trend1M(455.80, 0.9), volume: 42_000_000, relativeStrengthLabel: 'Nasdaq 100 ETF' },
+  JPM: { currentPrice: 198.50, dailyChange: 0.40, dailyChangePercent: 0.2, trend1D: trend1D(198.50, 0.2), trend5D: trend5D(198.50, 0.2), trend1M: trend1M(198.50, 0.2), volume: 8_500_000, relativeStrengthLabel: 'In line with sector' },
+  DIS: { currentPrice: 112.30, dailyChange: -0.56, dailyChangePercent: -0.5, trend1D: trend1D(112.30, -0.5), trend5D: trend5D(112.30, -0.5), trend1M: trend1M(112.30, -0.5), volume: 12_000_000, relativeStrengthLabel: 'Underperforming SPX' },
+  NFLX: { currentPrice: 485.60, dailyChange: 5.29, dailyChangePercent: 1.1, trend1D: trend1D(485.60, 1.1), trend5D: trend5D(485.60, 1.1), trend1M: trend1M(485.60, 1.1), volume: 4_200_000, relativeStrengthLabel: 'Outperforming NDX' },
+  COIN: { currentPrice: 248.20, dailyChange: 5.34, dailyChangePercent: 2.2, trend1D: trend1D(248.20, 2.2), trend5D: trend5D(248.20, 2.2), trend1M: trend1M(248.20, 2.2), volume: 15_000_000, relativeStrengthLabel: 'Crypto sector' },
 }
 
 export const COMPANY_FUNDAMENTALS_BY_SYMBOL: Record<string, CompanyFundamentals> = {
@@ -139,6 +155,12 @@ export const COMPANY_FUNDAMENTALS_BY_SYMBOL: Record<string, CompanyFundamentals>
   AVGO: { companyName: 'Broadcom Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$758B', peRatio: 42.1, evEbitda: 18.5, week52Low: 125.0, week52High: 185.0, revenueGrowth: '+34% YoY', grossMargin: '59.2%', nextEarnings: 'Jun 12, 2025', beta: 1.42, dividendYield: '1.6%' },
   GOOGL: { companyName: 'Alphabet Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$2.15T', peRatio: 26.2, evEbitda: 14.1, week52Low: 155.0, week52High: 182.0, revenueGrowth: '+10% YoY', grossMargin: '57.1%', nextEarnings: 'Apr 24, 2025', beta: 1.05, dividendYield: '0.52%' },
   INTC: { companyName: 'Intel Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$178B', peRatio: 28.5, evEbitda: 8.2, week52Low: 38.0, week52High: 52.0, revenueGrowth: '+3% YoY', grossMargin: '45.2%', nextEarnings: 'Apr 24, 2025', beta: 1.12, dividendYield: '1.6%' },
+  SPY: { companyName: 'SPDR S&P 500 ETF Trust', exchange: 'NYSE', sector: 'Financial', industry: 'ETF', marketCap: 'N/A', peRatio: null, evEbitda: null, week52Low: 480.0, week52High: 525.0, revenueGrowth: null, grossMargin: null, nextEarnings: null, beta: 1.0, dividendYield: '1.3%' },
+  QQQ: { companyName: 'Invesco QQQ Trust', exchange: 'NASDAQ', sector: 'Financial', industry: 'ETF', marketCap: 'N/A', peRatio: null, evEbitda: null, week52Low: 420.0, week52High: 465.0, revenueGrowth: null, grossMargin: null, nextEarnings: null, beta: 1.05, dividendYield: '0.5%' },
+  JPM: { companyName: 'JPMorgan Chase & Co.', exchange: 'NYSE', sector: 'Financial', industry: 'Banks', marketCap: '$570B', peRatio: 11.2, evEbitda: null, week52Low: 175.0, week52High: 205.0, revenueGrowth: '+8% YoY', grossMargin: null, nextEarnings: 'Apr 11, 2025', beta: 1.1, dividendYield: '2.2%' },
+  DIS: { companyName: 'The Walt Disney Company', exchange: 'NYSE', sector: 'Consumer Cyclical', industry: 'Entertainment', marketCap: '$205B', peRatio: 22.5, evEbitda: 12.1, week52Low: 85.0, week52High: 125.0, revenueGrowth: '+4% YoY', grossMargin: '35%', nextEarnings: 'May 7, 2025', beta: 1.35, dividendYield: '0.3%' },
+  NFLX: { companyName: 'Netflix, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Entertainment', marketCap: '$212B', peRatio: 45.2, evEbitda: 28.5, week52Low: 420.0, week52High: 510.0, revenueGrowth: '+15% YoY', grossMargin: '45%', nextEarnings: 'Apr 17, 2025', beta: 1.25, dividendYield: null },
+  COIN: { companyName: 'Coinbase Global, Inc.', exchange: 'NASDAQ', sector: 'Financial', industry: 'Financial Data', marketCap: '$58B', peRatio: 35.5, evEbitda: 22.1, week52Low: 180.0, week52High: 280.0, revenueGrowth: '+45% YoY', grossMargin: '82%', nextEarnings: 'May 1, 2025', beta: 2.1, dividendYield: null },
 }
 
 const now = new Date()

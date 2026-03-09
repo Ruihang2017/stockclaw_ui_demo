@@ -7,8 +7,8 @@ import { CenterPanel } from './components/CenterPanel'
 import { RightPanel } from './components/RightPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
-import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, SIGNALS, MARKET_INDEXES } from './mockData'
-import type { FilterChipId, UserSettings } from './types'
+import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES } from './mockData'
+import type { FilterChipId, UserSettings, WatchlistTicker } from './types'
 
 export function StockClawDashboard() {
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('swing')
@@ -25,8 +25,56 @@ export function StockClawDashboard() {
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(SIGNALS[0]?.id ?? null)
   const [lang, setLang] = useState<'en' | 'zh'>('en')
   const [activeFilter, setActiveFilter] = useState<FilterChipId>('all')
+  const [lastUpdated, setLastUpdated] = useState('8s ago')
+  const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[] }>>({})
 
-  const { summary: watchlistSummary, tickers: watchlistTickers } = WATCHLIST_BY_ID[activeWatchlistId] ?? WATCHLIST_BY_ID['swing']
+  const { summary: watchlistSummary, tickers: baseWatchlistTickers } = WATCHLIST_BY_ID[activeWatchlistId] ?? WATCHLIST_BY_ID['swing']
+
+  const displayTickers = useMemo(() => {
+    const base = baseWatchlistTickers ?? []
+    const edits = watchlistEdits[activeWatchlistId]
+    const removed = edits?.removed ?? []
+    const added = edits?.added ?? []
+    return [...base.filter((t) => !removed.includes(t.symbol)), ...added]
+  }, [activeWatchlistId, baseWatchlistTickers, watchlistEdits])
+
+  const displaySummary = useMemo(() => {
+    if (!watchlistSummary) return watchlistSummary
+    return { ...watchlistSummary, trackedCount: displayTickers.length }
+  }, [watchlistSummary, displayTickers.length])
+
+  const addableTickers = useMemo(
+    () => ADDABLE_TICKERS.filter((t) => !displayTickers.some((d) => d.symbol === t.symbol)),
+    [displayTickers]
+  )
+
+  const handleRemoveTicker = (symbol: string) => {
+    setWatchlistEdits((prev) => {
+      const id = activeWatchlistId
+      const current = prev[id] ?? { removed: [], added: [] }
+      return {
+        ...prev,
+        [id]: { ...current, removed: [...current.removed, symbol] },
+      }
+    })
+    if (selectedTicker === symbol) setSelectedTicker(null)
+  }
+
+  const handleAddTicker = (ticker: WatchlistTicker) => {
+    setWatchlistEdits((prev) => {
+      const id = activeWatchlistId
+      const current = prev[id] ?? { removed: [], added: [] }
+      return {
+        ...prev,
+        [id]: { ...current, added: [...current.added, ticker] },
+      }
+    })
+  }
+
+  const handleRefresh = () => {
+    setLastUpdated('just now')
+    setTimeout(() => setLastUpdated('8s ago'), 2500)
+  }
 
   const filteredSignals = useMemo(() => {
     let list = [...SIGNALS]
@@ -71,19 +119,22 @@ export function StockClawDashboard() {
         notifications={MOCK_NOTIFICATIONS}
       />
       <StatusStrip
-        lastUpdated="8s ago"
+        lastUpdated={lastUpdated}
         newSignalsInWatchlist={watchlistSummary.signalsToday}
         breakingCount={watchlistSummary.breakingCount}
       />
       <MarketContextStrip indexes={MARKET_INDEXES} />
       <div className="flex min-h-0 flex-1 flex-wrap">
         <LeftPanel
-          summary={watchlistSummary}
-          tickers={watchlistTickers}
+          summary={displaySummary}
+          tickers={displayTickers}
           selectedTicker={selectedTicker}
           onSelectTicker={setSelectedTicker}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          onRemoveTicker={handleRemoveTicker}
+          addableTickers={addableTickers}
+          onAddTicker={handleAddTicker}
         />
         <CenterPanel
           signals={filteredSignals}
@@ -92,6 +143,7 @@ export function StockClawDashboard() {
           lang={lang}
           onSelectSignal={setSelectedSignalId}
           onOpenSignalFromRAG={handleOpenSignalFromRAG}
+          onRefresh={handleRefresh}
         />
         <RightPanel signal={selectedSignal} displayTicker={displayTicker} lang={lang} />
       </div>
