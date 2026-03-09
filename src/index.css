@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-charcoal: #0d0f12;
+  --panel: #14171c;
+  --border: #2a2f3a;
+  --accent-gold: #c9a227;
+  --bullish: #22c55e;
+  --bearish: #ef4444;
+  --breaking: #f97316;
+}
+
+html {
+  background-color: var(--bg-charcoal);
+}
+
+body {
+  @apply bg-charcoal-950 text-gray-200 antialiased;
+  background-color: var(--bg-charcoal);
+}
