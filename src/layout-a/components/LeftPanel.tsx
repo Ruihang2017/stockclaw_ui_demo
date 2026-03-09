@@ -1,9 +1,10 @@
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Settings } from 'lucide-react'
 import type { WatchlistTicker, WatchlistSummary } from '../types'
 import type { FilterChipId } from '../types'
-import { WATCHLIST_SUMMARY, WATCHLIST_TICKERS } from '../mockData'
 
 interface LeftPanelProps {
+  summary: WatchlistSummary
+  tickers: WatchlistTicker[]
   selectedTicker: string | null
   onSelectTicker: (symbol: string) => void
   activeFilter: FilterChipId
@@ -38,21 +39,23 @@ function dailyChangeColor(pct: number | undefined) {
 }
 
 export function LeftPanel({
+  summary,
+  tickers,
   selectedTicker,
   onSelectTicker,
   activeFilter,
   onFilterChange,
 }: LeftPanelProps) {
-  const summary: WatchlistSummary = WATCHLIST_SUMMARY
-  const tickers: WatchlistTicker[] = WATCHLIST_TICKERS
-
   return (
     <aside className="flex w-full flex-shrink-0 flex-col border-r border-charcoal-600 bg-charcoal-900 md:min-w-[280px] md:max-w-[300px]">
       {/* Watchlist selector */}
       <div className="border-b border-charcoal-600 p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-200">{summary.name}</span>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+        <div className="flex items-center justify-between gap-2">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-200">{summary.name}</span>
+          <button type="button" className="shrink-0 text-gray-500 hover:text-gray-300" title="Manage watchlist">
+            <Settings className="h-3.5 w-3.5" />
+          </button>
+          <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />
         </div>
         <p className="mt-0.5 text-xs text-gray-500">{summary.trackedCount} tracked</p>
       </div>

@@ -22,7 +22,7 @@ export function RightPanel({ signal, displayTicker, lang }: RightPanelProps) {
 
   if (!signal && !displayTicker) {
     return (
-      <aside className="flex w-full flex-shrink-0 flex-col border-l border-charcoal-600 bg-charcoal-900 md:w-[400px]">
+      <aside className="flex w-full flex-shrink-0 flex-col border-l border-charcoal-600 bg-charcoal-900 md:w-[420px]">
         <div className="flex flex-1 items-center justify-center p-6 text-sm text-gray-500">
           Select a signal or ticker to view details
         </div>
@@ -35,7 +35,7 @@ export function RightPanel({ signal, displayTicker, lang }: RightPanelProps) {
 
   if (!signal && displayTicker) {
     return (
-      <aside className="flex w-full flex-shrink-0 flex-col overflow-hidden border-l border-charcoal-600 bg-charcoal-900 md:w-[400px]">
+      <aside className="flex w-full flex-shrink-0 flex-col overflow-hidden border-l border-charcoal-600 bg-charcoal-900 md:w-[420px]">
         <div className="flex flex-1 flex-col overflow-y-auto p-3">
           <MarketReactionModule
             tickerSymbol={displayTicker}
@@ -63,7 +63,7 @@ export function RightPanel({ signal, displayTicker, lang }: RightPanelProps) {
   ]
 
   return (
-    <aside className="flex w-full flex-shrink-0 flex-col overflow-hidden border-l border-charcoal-600 bg-charcoal-900 md:w-[400px]">
+    <aside className="flex w-full flex-shrink-0 flex-col overflow-hidden border-l border-charcoal-600 bg-charcoal-900 md:w-[420px]">
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* A. Signal header */}
         <div className="border-b border-charcoal-600 p-3">

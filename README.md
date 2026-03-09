@@ -27,15 +27,25 @@ npm run dev
 
 Then open the URL shown (e.g. `http://localhost:5173`).
 
+## Demo
+
+- **Live demo:** [Link when deployed]
+- Run locally: `npm run dev` then open the URL shown above.
+
+## Feedback
+
+We’d love your feedback on this demo. After running the app (or using the live demo), submit comments or suggestions via the **Demo v2 — Feedback** link in the header (or replace the link target in the app with your form/mailto). You can also open an issue in this repo or contact the team directly.
+
+## Deploy
+
+For static hosting (e.g. GitHub Pages), set the correct `base` in `vite.config.js` (e.g. `base: '/stockclaw_ui_demo/'` when the app is served at `https://user.github.io/stockclaw_ui_demo/`), then run `npm run build`. Serve the `dist/` folder from your host.
+
 ## Screenshots
 
-**Overview** — Market strip, watchlist with price context, signal feed with NVDA filtered, and RAG block.
+Screenshots can be added to the `screenshots/` folder after running the app (e.g. `dashboard-overview.png`, `dashboard-signal-detail.png`). Until then, the README references these placeholders:
 
-![Dashboard overview](screenshots/dashboard-overview.png)
-
-**Signal detail** — Summary tab with Market Reaction module (price, mini chart, timeframe toggle), Reasoning Chain, and Company Snapshot (fundamentals). Language set to 中文 for summary.
-
-![Signal detail and company snapshot](screenshots/dashboard-signal-detail.png)
+- **Overview** — Market strip, watchlist with price context, signal feed with NVDA filtered, and Historical Search (RAG) block.
+- **Signal detail** — Summary tab with Market Reaction module (price, mini chart, timeframe toggle), Reasoning Chain, and Company Snapshot (fundamentals). Language set to 中文 for summary.
 
 ## Layout
 

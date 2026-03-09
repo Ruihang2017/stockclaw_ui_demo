@@ -1,4 +1,4 @@
-import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals } from './types'
+import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals, WatchlistOption, NotificationItem } from './types'
 
 export const WATCHLIST_SUMMARY: WatchlistSummary = {
   name: 'My Swing Watchlist',
@@ -7,6 +7,32 @@ export const WATCHLIST_SUMMARY: WatchlistSummary = {
   breakingCount: 2,
   bullishRatio: 0.62,
   mostActiveAgent: 'Macro Pulse',
+}
+
+export const MOCK_WATCHLISTS: WatchlistOption[] = [
+  { id: 'swing', name: 'My Swing Watchlist' },
+  { id: 'tech', name: 'Tech Focus' },
+]
+
+// Tech Focus: subset of tickers (semis + big tech)
+const TECH_FOCUS_TICKERS: WatchlistTicker[] = [
+  { symbol: 'NVDA', companyName: 'NVIDIA Corp', market: 'US', sector: 'Semiconductors', signalCountToday: 4, lastSignalAt: '2m ago', sentimentBias: 'bearish', hasBreaking: true, currentPrice: 912.45, dailyChangePercent: 1.8 },
+  { symbol: 'AMD', companyName: 'Advanced Micro', market: 'US', sector: 'Semiconductors', signalCountToday: 3, lastSignalAt: '8m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 178.32, dailyChangePercent: -0.4 },
+  { symbol: 'TSM', companyName: 'Taiwan Semi', market: 'TW', sector: 'Semiconductors', signalCountToday: 2, lastSignalAt: '15m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 142.88, dailyChangePercent: 0.8 },
+  { symbol: 'AAPL', companyName: 'Apple Inc', market: 'US', sector: 'Technology', signalCountToday: 1, lastSignalAt: '22m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 228.15, dailyChangePercent: 0.2 },
+  { symbol: 'MSFT', companyName: 'Microsoft', market: 'US', sector: 'Technology', signalCountToday: 2, lastSignalAt: '31m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 415.62, dailyChangePercent: 0.6 },
+  { symbol: 'META', companyName: 'Meta Platforms', market: 'US', sector: 'Technology', signalCountToday: 1, lastSignalAt: '45m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 512.30, dailyChangePercent: 1.2 },
+  { symbol: 'GOOGL', companyName: 'Alphabet Inc', market: 'US', sector: 'Technology', signalCountToday: 1, lastSignalAt: '38m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 172.50, dailyChangePercent: 0.9 },
+  { symbol: 'AVGO', companyName: 'Broadcom Inc', market: 'US', sector: 'Semiconductors', signalCountToday: 1, lastSignalAt: '52m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 168.75, dailyChangePercent: 0.3 },
+]
+
+const TECH_FOCUS_SUMMARY: WatchlistSummary = {
+  name: 'Tech Focus',
+  trackedCount: 8,
+  signalsToday: 15,
+  breakingCount: 1,
+  bullishRatio: 0.67,
+  mostActiveAgent: 'Earnings Scout',
 }
 
 export const WATCHLIST_TICKERS: WatchlistTicker[] = [
@@ -20,6 +46,21 @@ export const WATCHLIST_TICKERS: WatchlistTicker[] = [
   { symbol: 'TSLA', companyName: 'Tesla Inc', market: 'US', sector: 'Auto', signalCountToday: 1, lastSignalAt: '1h ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 248.90, dailyChangePercent: -0.5 },
   { symbol: 'SMCI', companyName: 'Super Micro', market: 'US', sector: 'Hardware', signalCountToday: 3, lastSignalAt: '18m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 885.20, dailyChangePercent: 2.4 },
   { symbol: 'AVGO', companyName: 'Broadcom Inc', market: 'US', sector: 'Semiconductors', signalCountToday: 1, lastSignalAt: '52m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 168.75, dailyChangePercent: 0.3 },
+  { symbol: 'GOOGL', companyName: 'Alphabet Inc', market: 'US', sector: 'Technology', signalCountToday: 1, lastSignalAt: '38m ago', sentimentBias: 'bullish', hasBreaking: false, currentPrice: 172.50, dailyChangePercent: 0.9 },
+  { symbol: 'INTC', companyName: 'Intel Corp', market: 'US', sector: 'Semiconductors', signalCountToday: 2, lastSignalAt: '25m ago', sentimentBias: 'neutral', hasBreaking: false, currentPrice: 42.18, dailyChangePercent: -0.6 },
+]
+
+export const WATCHLIST_BY_ID: Record<string, { summary: WatchlistSummary; tickers: WatchlistTicker[] }> = {
+  swing: { summary: WATCHLIST_SUMMARY, tickers: WATCHLIST_TICKERS },
+  tech: { summary: TECH_FOCUS_SUMMARY, tickers: TECH_FOCUS_TICKERS },
+}
+
+export const MOCK_NOTIFICATIONS: NotificationItem[] = [
+  { id: 'n1', title: '2 new BREAKING signals in your watchlist', time: '2m ago', type: 'breaking' },
+  { id: 'n2', title: 'Watchlist "My Swing Watchlist" updated', time: '5m ago', type: 'info' },
+  { id: 'n3', title: 'NVDA — Signal from Macro Pulse', time: '8m ago', type: 'breaking' },
+  { id: 'n4', title: 'TSM earnings signal from Earnings Scout', time: '12m ago', type: 'info' },
+  { id: 'n5', title: '3 new signals in Tech Focus', time: '18m ago', type: 'info' },
 ]
 
 // Sparkline trend: ~24 points (e.g. hourly). Values normalized for display.
@@ -81,6 +122,8 @@ export const STOCK_PRICE_BY_SYMBOL: Record<string, StockPriceData> = {
   TSLA: { currentPrice: 248.90, dailyChange: -1.25, dailyChangePercent: -0.5, trend1D: trend1D(248.90, -0.5), trend5D: trend5D(248.90, -0.5), trend1M: trend1M(248.90, -0.5), volume: 95_000_000, relativeStrengthLabel: 'In line with sector' },
   SMCI: { currentPrice: 885.20, dailyChange: 20.75, dailyChangePercent: 2.4, trend1D: trend1D(885.20, 2.4), trend5D: trend5D(885.20, 2.4), trend1M: trend1M(885.20, 2.4), volume: 8_200_000, relativeStrengthLabel: 'Outperforming SOX +1.8%' },
   AVGO: { currentPrice: 168.75, dailyChange: 0.51, dailyChangePercent: 0.3, trend1D: trend1D(168.75, 0.3), trend5D: trend5D(168.75, 0.3), trend1M: trend1M(168.75, 0.3), volume: 3_800_000, relativeStrengthLabel: 'In line with SOX' },
+  GOOGL: { currentPrice: 172.50, dailyChange: 1.54, dailyChangePercent: 0.9, trend1D: trend1D(172.50, 0.9), trend5D: trend5D(172.50, 0.9), trend1M: trend1M(172.50, 0.9), volume: 24_000_000, relativeStrengthLabel: 'In line with NDX' },
+  INTC: { currentPrice: 42.18, dailyChange: -0.25, dailyChangePercent: -0.6, trend1D: trend1D(42.18, -0.6), trend5D: trend5D(42.18, -0.6), trend1M: trend1M(42.18, -0.6), volume: 38_000_000, relativeStrengthLabel: 'Underperforming SOX -0.4%' },
 }
 
 export const COMPANY_FUNDAMENTALS_BY_SYMBOL: Record<string, CompanyFundamentals> = {
@@ -94,6 +137,8 @@ export const COMPANY_FUNDAMENTALS_BY_SYMBOL: Record<string, CompanyFundamentals>
   TSLA: { companyName: 'Tesla, Inc.', exchange: 'NASDAQ', sector: 'Consumer Cyclical', industry: 'Auto Manufacturers', marketCap: '$792B', peRatio: 72.5, evEbitda: 45.2, week52Low: 218.0, week52High: 299.0, revenueGrowth: '+19% YoY', grossMargin: '18.2%', nextEarnings: 'Apr 23, 2025', beta: 2.15, dividendYield: null },
   SMCI: { companyName: 'Super Micro Computer, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Computer Hardware', marketCap: '$48B', peRatio: 28.2, evEbitda: 22.1, week52Low: 425.0, week52High: 965.0, revenueGrowth: '+88% YoY', grossMargin: '16.8%', nextEarnings: 'Apr 30, 2025', beta: 1.95, dividendYield: null },
   AVGO: { companyName: 'Broadcom Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$758B', peRatio: 42.1, evEbitda: 18.5, week52Low: 125.0, week52High: 185.0, revenueGrowth: '+34% YoY', grossMargin: '59.2%', nextEarnings: 'Jun 12, 2025', beta: 1.42, dividendYield: '1.6%' },
+  GOOGL: { companyName: 'Alphabet Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$2.15T', peRatio: 26.2, evEbitda: 14.1, week52Low: 155.0, week52High: 182.0, revenueGrowth: '+10% YoY', grossMargin: '57.1%', nextEarnings: 'Apr 24, 2025', beta: 1.05, dividendYield: '0.52%' },
+  INTC: { companyName: 'Intel Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$178B', peRatio: 28.5, evEbitda: 8.2, week52Low: 38.0, week52High: 52.0, revenueGrowth: '+3% YoY', grossMargin: '45.2%', nextEarnings: 'Apr 24, 2025', beta: 1.12, dividendYield: '1.6%' },
 }
 
 const now = new Date()
@@ -455,9 +500,10 @@ export const RAG_MOCK: RAGResult = {
   answerSummary: 'NVDA shares weakened in February primarily due to (1) renewed concerns over U.S.–China semiconductor export rules and potential compliance checks on data center GPU shipments, (2) profit-taking after a strong January rally, and (3) mixed hyperscaler order commentary that suggested some front-loading of H1 demand. Strong structural AI demand remained intact, but near-term sentiment was pressured by policy and positioning.',
   answerSummaryZh: '英伟达股价在二月走弱主要因为：(1) 美中半导体出口规则再度引发担忧，数据中心GPU对华出货或面临合规检查；(2) 一月大涨后的获利了结；(3) 超大规模厂商订单评论好坏参半，暗示上半年需求前倾。结构性AI需求仍然强劲，但政策与仓位压制短期情绪。',
   timeRange: 'Feb 1 – Mar 1, 2025',
+  tickersInvolved: ['NVDA', 'AMD', 'TSM'],
   supportingSignals: [
-    { signalId: 'sig-001', summary: 'Reuters: tighter semiconductor export restrictions; NVIDIA and AMD GPU shipments to China may face new compliance checks in Q2.', date: '2025-03-08', source: 'Reuters', ticker: 'NVDA', relevance: 0.95 },
-    { signalId: 'sig-003', summary: 'Hyperscaler order patterns suggest front-loaded AI server demand in H1; watch for order pushouts in Q2 guidance.', date: '2025-03-08', source: 'Bloomberg', ticker: 'NVDA', relevance: 0.82 },
-    { signalId: 'sig-002', summary: 'TSMC raises capex; 3nm and CoWoS capacity ahead of schedule. Positive read-through for NVDA and AMD.', date: '2025-03-08', source: 'Company filing', ticker: 'TSM', relevance: 0.78 },
+    { signalId: 'sig-001', summary: 'Reuters: tighter semiconductor export restrictions; NVIDIA and AMD GPU shipments to China may face new compliance checks in Q2.', date: '2025-03-08', source: 'Reuters', ticker: 'NVDA', relevance: 0.95, whyMatched: 'Direct mention of NVDA and export restrictions; semantic match to "weaken despite AI demand" (policy headwind).' },
+    { signalId: 'sig-003', summary: 'Hyperscaler order patterns suggest front-loaded AI server demand in H1; watch for order pushouts in Q2 guidance.', date: '2025-03-08', source: 'Bloomberg', ticker: 'NVDA', relevance: 0.82, whyMatched: 'Explains demand timing and order pushouts that contributed to near-term weakness; matches "strong AI demand" vs short-term pressure.' },
+    { signalId: 'sig-002', summary: 'TSMC raises capex; 3nm and CoWoS capacity ahead of schedule. Positive read-through for NVDA and AMD.', date: '2025-03-08', source: 'Company filing', ticker: 'TSM', relevance: 0.78, whyMatched: 'Supply chain context for NVDA; CoWoS is key for NVDA GPUs; supports "AI demand" narrative while timeframe aligns with "last month".' },
   ],
 }

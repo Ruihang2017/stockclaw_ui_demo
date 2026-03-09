@@ -105,6 +105,7 @@ export interface RAGEvidenceCard {
   source: string
   ticker: string
   relevance: number
+  whyMatched?: string
 }
 
 export interface RAGResult {
@@ -112,7 +113,27 @@ export interface RAGResult {
   answerSummary: string
   answerSummaryZh: string
   timeRange: string
+  tickersInvolved?: string[]
   supportingSignals: RAGEvidenceCard[]
 }
 
 export type FilterChipId = 'all' | 'breaking' | 'bullish' | 'bearish' | 'macro' | 'earnings' | 'policy'
+
+export interface WatchlistOption {
+  id: string
+  name: string
+}
+
+export interface NotificationItem {
+  id: string
+  title: string
+  time: string
+  type?: 'breaking' | 'info'
+}
+
+export interface UserSettings {
+  dateFormat: 'relative' | 'absolute'
+  emailDigest: boolean
+  push: boolean
+  breakingOnly: boolean
+}

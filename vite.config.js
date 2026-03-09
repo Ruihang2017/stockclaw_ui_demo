@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   root: __dirname,
+  // For GitHub Pages: set base to your repo path, e.g. base: '/stockclaw_ui_demo/'
   plugins: [react()],
   resolve: {
     alias: {
