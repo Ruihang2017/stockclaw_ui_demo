@@ -8,9 +8,10 @@ interface RAGModuleProps {
   onOpenSignal?: (signalId: string) => void
   initialQuery?: string
   onQueryConsumed?: () => void
+  onOpenInChat?: (query: string) => void
 }
 
-export function RAGModule({ lang, onOpenSignal, initialQuery, onQueryConsumed }: RAGModuleProps) {
+export function RAGModule({ lang, onOpenSignal, initialQuery, onQueryConsumed, onOpenInChat }: RAGModuleProps) {
   const data: RAGResult = RAG_MOCK
   const [query, setQuery] = useState(initialQuery ?? data.query)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -54,6 +55,15 @@ export function RAGModule({ lang, onOpenSignal, initialQuery, onQueryConsumed }:
           {tickersLabel != null && <span>{tickersLabel}</span>}
           <span>{countLabel}</span>
         </div>
+        {onOpenInChat && (
+          <button
+            type="button"
+            onClick={() => onOpenInChat(query.trim() || data.query)}
+            className="mt-2 text-[10px] text-accent-gold hover:underline"
+          >
+            Continue in Chat
+          </button>
+        )}
       </div>
       <div className="mt-3">
         <p className="mb-2 text-[10px] uppercase text-gray-500">Supporting evidence</p>

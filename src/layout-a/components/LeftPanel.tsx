@@ -43,7 +43,7 @@ interface LeftPanelProps {
   watchlistSettings?: WatchlistSettings
   onWatchlistSettingsSave?: (id: string, settings: WatchlistSettings) => void
   onReorderTicker?: (newOrder: string[]) => void
-  onAskAI?: (query: string) => void
+  onAskAI?: (query: string, ticker?: string) => void
 }
 
 const FILTER_CHIPS: { id: FilterChipId; label: string }[] = [
@@ -78,7 +78,7 @@ interface SortableTickerRowProps {
   selectedTicker: string | null
   onSelectTicker: (symbol: string) => void
   onRemoveTicker?: (symbol: string) => void
-  onAskAI?: (query: string) => void
+  onAskAI?: (query: string, ticker?: string) => void
   quickActionOpen: string | null
   setQuickActionOpen: (s: string | null) => void
   rowRef: ((el: HTMLDivElement | null) => void) | undefined
@@ -196,7 +196,7 @@ function SortableTickerRow({
             <button
               type="button"
               onClick={() => {
-                onAskAI(`What's the outlook for ${t.symbol}?`)
+                onAskAI(`What's the outlook for ${t.symbol}?`, t.symbol)
                 setQuickActionOpen(null)
               }}
               className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"
@@ -599,7 +599,7 @@ export function LeftPanel({
                         <button
                           type="button"
                           onClick={() => {
-                            onAskAI(`What's the outlook for ${t.symbol}?`)
+                            onAskAI(`What's the outlook for ${t.symbol}?`, t.symbol)
                             setQuickActionOpen(null)
                           }}
                           className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"

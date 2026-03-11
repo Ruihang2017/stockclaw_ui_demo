@@ -119,6 +119,17 @@ export interface RAGResult {
 
 export type FilterChipId = 'all' | 'breaking' | 'bullish' | 'bearish' | 'macro' | 'earnings' | 'policy'
 
+export type FeedTimeRange = '24h' | '7d' | '30d'
+
+export interface FeedFilters {
+  urgency?: Urgency
+  sentiment?: SentimentBias
+  agent?: string
+  category?: string
+  source?: string
+  timeRange?: FeedTimeRange
+}
+
 export interface WatchlistOption {
   id: string
   name: string
@@ -154,6 +165,15 @@ export interface NotificationItem {
   time: string
   type?: 'breaking' | 'info'
 }
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export type ChatContext =
+  | { type: 'signal'; signalId: string; summary?: string }
+  | { type: 'ticker'; symbol: string }
 
 export interface UserSettings {
   dateFormat: 'relative' | 'absolute'

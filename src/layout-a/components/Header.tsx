@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Search, Bell, Settings, Radio } from 'lucide-react'
 import type { NotificationItem } from '../types'
 import { NotificationsDropdown } from './NotificationsDropdown'
@@ -10,6 +10,8 @@ interface HeaderProps {
   onOpenSettings: () => void
   onOpenNotifications: () => void
   onOpenHelp: () => void
+  onOpenChat?: () => void
+  onSearchSubmit?: (query: string) => void
   notificationsOpen: boolean
   onCloseNotifications: () => void
   notifications: NotificationItem[]
@@ -22,24 +24,59 @@ export function Header({
   onOpenSettings,
   onOpenNotifications,
   onOpenHelp,
+  onOpenChat,
+  onSearchSubmit,
   notificationsOpen,
   onCloseNotifications,
   notifications,
 }: HeaderProps) {
   const notificationsRef = useRef<HTMLDivElement>(null)
+  const [searchValue, setSearchValue] = useState('')
+
+  const handleSearchSubmit = () => {
+    const q = searchValue.trim()
+    if (q && onSearchSubmit) {
+      onSearchSubmit(q)
+      setSearchValue('')
+    } else if (onOpenChat) {
+      onOpenChat()
+    }
+  }
 
   return (
     <header className="flex h-11 items-center gap-4 border-b border-charcoal-600 bg-charcoal-900 px-4 shadow-panel">
       <span className="text-sm font-semibold text-accent-gold">StockClaw</span>
       <div className="flex flex-1 items-center gap-2">
         <div className="flex flex-1 max-w-md items-center gap-2 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5">
-          <Search className="h-3.5 w-3.5 text-gray-500" />
+          <Search className="h-3.5 w-3.5 shrink-0 text-gray-500" />
           <input
             type="text"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
             placeholder="Search signals, tickers, companies..."
             className="min-w-0 flex-1 bg-transparent text-xs text-gray-200 placeholder:text-gray-500 focus:outline-none"
           />
+          {onSearchSubmit && (
+            <button
+              type="button"
+              onClick={handleSearchSubmit}
+              className="shrink-0 text-gray-500 hover:text-gray-300"
+              aria-label="Search"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
+        {onOpenChat && (
+          <button
+            type="button"
+            onClick={onOpenChat}
+            className="shrink-0 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5 text-xs text-gray-200 hover:border-charcoal-500 hover:text-gray-300"
+          >
+            Ask StockClaw
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-xs text-system">

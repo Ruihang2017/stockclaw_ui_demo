@@ -8,9 +8,38 @@ import { CenterPanel } from './components/CenterPanel'
 import { RightPanel } from './components/RightPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
+import { ChatSlideOver } from './components/ChatSlideOver'
 import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES, MARKET_PULSE_ITEMS } from './mockData'
-import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings } from './types'
+import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings, ChatMessage, ChatContext, FeedFilters, FeedTimeRange } from './types'
 import { DEFAULT_WATCHLIST_SETTINGS } from './types'
+
+function chipToFeedFilters(chipId: FilterChipId): Partial<FeedFilters> {
+  switch (chipId) {
+    case 'all':
+      return {}
+    case 'breaking':
+      return { urgency: 'BREAKING' }
+    case 'bullish':
+      return { sentiment: 'bullish' }
+    case 'bearish':
+      return { sentiment: 'bearish' }
+    case 'macro':
+      return { category: 'Macro' }
+    case 'earnings':
+      return { category: 'Earnings' }
+    case 'policy':
+      return { category: 'Policy' }
+    default:
+      return {}
+  }
+}
+
+function isWithinTimeRange(publishedAt: string, timeRange: FeedTimeRange): boolean {
+  const pub = new Date(publishedAt).getTime()
+  const now = Date.now()
+  const ms = timeRange === '24h' ? 24 * 60 * 60 * 1000 : timeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000
+  return now - pub <= ms
+}
 
 export function StockClawDashboard() {
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('swing')
@@ -27,6 +56,7 @@ export function StockClawDashboard() {
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(SIGNALS[0]?.id ?? null)
   const [lang, setLang] = useState<'en' | 'zh'>('en')
   const [activeFilter, setActiveFilter] = useState<FilterChipId>('all')
+  const [feedFilters, setFeedFilters] = useState<FeedFilters>({})
   const [lastUpdated, setLastUpdated] = useState('8s ago')
   const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[]; order?: string[] }>>({})
   const [watchlistNameOverrides, setWatchlistNameOverrides] = useState<Record<string, string>>({})
@@ -34,6 +64,36 @@ export function StockClawDashboard() {
   const [customWatchlists, setCustomWatchlists] = useState<{ id: string; name: string }[]>([])
   const [pendingRenameWatchlistId, setPendingRenameWatchlistId] = useState<string | null>(null)
   const [ragPrompt, setRagPrompt] = useState<string | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatContext, setChatContext] = useState<ChatContext | null>(null)
+  const [pinnedSignalIds, setPinnedSignalIds] = useState<string[]>(() => {
+    try {
+      const s = localStorage.getItem('stockclaw_pinned')
+      return s ? JSON.parse(s) : []
+    } catch { return [] }
+  })
+  const [readSignalIds, setReadSignalIds] = useState<string[]>(() => {
+    try {
+      const s = localStorage.getItem('stockclaw_read')
+      return s ? JSON.parse(s) : []
+    } catch { return [] }
+  })
+  const [feedListView, setFeedListView] = useState<'all' | 'unread' | 'pinned'>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'urgency' | 'impact'>(() => {
+    try {
+      const s = localStorage.getItem('stockclaw_feed_preferences')
+      const p = s ? JSON.parse(s) : null
+      return (p?.sortBy === 'oldest' || p?.sortBy === 'urgency' || p?.sortBy === 'impact') ? p.sortBy : 'newest'
+    } catch { return 'newest' }
+  })
+  const [feedViewMode, setFeedViewMode] = useState<'list' | 'grid'>(() => {
+    try {
+      const s = localStorage.getItem('stockclaw_feed_preferences')
+      const p = s ? JSON.parse(s) : null
+      return p?.feedViewMode === 'grid' ? 'grid' : 'list'
+    } catch { return 'list' }
+  })
 
   const baseWatchlistData = WATCHLIST_BY_ID[activeWatchlistId]
   const watchlistSummary = baseWatchlistData?.summary ?? {
@@ -143,8 +203,40 @@ export function StockClawDashboard() {
     })
   }
 
-  const handleAskAI = (query: string) => {
+  const handleAskAI = (query: string, ticker?: string) => {
     setRagPrompt(query)
+    if (ticker) setChatContext({ type: 'ticker', symbol: ticker })
+    setChatOpen(true)
+  }
+
+  const handleAskAboutSignal = (signalId: string, summary?: string) => {
+    setChatContext({ type: 'signal', signalId, summary })
+    setRagPrompt('Explain this signal in more detail')
+    setChatOpen(true)
+  }
+
+  const handleSearchSubmit = (query: string) => {
+    setRagPrompt(query)
+    setChatContext(null)
+    setChatOpen(true)
+  }
+
+  const handleOpenInChat = (query: string) => {
+    setRagPrompt(query)
+    setChatOpen(true)
+  }
+
+  const handleSendChatMessage = (content: string) => {
+    setChatMessages((prev) => [
+      ...prev,
+      { role: 'user', content },
+      { role: 'assistant', content: 'This is a placeholder reply. In production, this would call your RAG/agent API.' },
+    ])
+  }
+
+  const handleChatClose = () => {
+    setChatOpen(false)
+    setChatContext(null)
   }
 
   const handleRefresh = () => {
@@ -157,15 +249,78 @@ export function StockClawDashboard() {
     if (selectedTicker) {
       list = list.filter((s) => s.tickers.includes(selectedTicker))
     }
-    if (activeFilter === 'breaking') {
-      list = list.filter((s) => s.urgency === 'BREAKING')
-    } else if (activeFilter === 'bullish') {
-      list = list.filter((s) => s.sentiment === 'bullish')
-    } else if (activeFilter === 'bearish') {
-      list = list.filter((s) => s.sentiment === 'bearish')
-    }
+    if (feedFilters.urgency) list = list.filter((s) => s.urgency === feedFilters.urgency)
+    if (feedFilters.sentiment) list = list.filter((s) => s.sentiment === feedFilters.sentiment)
+    if (feedFilters.agent) list = list.filter((s) => s.agent === feedFilters.agent)
+    if (feedFilters.category) list = list.filter((s) => s.category === feedFilters.category)
+    if (feedFilters.source) list = list.filter((s) => s.source === feedFilters.source)
+    if (feedFilters.timeRange) list = list.filter((s) => isWithinTimeRange(s.publishedAt, feedFilters.timeRange!))
     return list
-  }, [selectedTicker, activeFilter])
+  }, [selectedTicker, feedFilters])
+
+  const handleFilterChange = (chipId: FilterChipId) => {
+    setActiveFilter(chipId)
+    setFeedFilters((prev) => ({ ...prev, ...chipToFeedFilters(chipId) }))
+  }
+
+  const handleClearFilters = () => {
+    setActiveFilter('all')
+    setFeedFilters({})
+    setSelectedTicker(null)
+  }
+
+  const handlePin = (signalId: string) => {
+    setPinnedSignalIds((prev) => {
+      const next = prev.includes(signalId) ? prev.filter((id) => id !== signalId) : [...prev, signalId]
+      try { localStorage.setItem('stockclaw_pinned', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  const handleMarkRead = (signalId: string) => {
+    setReadSignalIds((prev) => {
+      const next = prev.includes(signalId) ? prev.filter((id) => id !== signalId) : [...prev, signalId]
+      try { localStorage.setItem('stockclaw_read', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  const signalsAfterListView = useMemo(() => {
+    if (feedListView === 'unread') return filteredSignals.filter((s) => !readSignalIds.includes(s.id))
+    if (feedListView === 'pinned') return filteredSignals.filter((s) => pinnedSignalIds.includes(s.id))
+    return filteredSignals
+  }, [filteredSignals, feedListView, readSignalIds, pinnedSignalIds])
+
+  const persistFeedPreferences = (updates: { sortBy?: typeof sortBy; feedViewMode?: typeof feedViewMode }) => {
+    try {
+      const s = localStorage.getItem('stockclaw_feed_preferences')
+      const p = s ? JSON.parse(s) : {}
+      const next = { ...p, ...updates }
+      localStorage.setItem('stockclaw_feed_preferences', JSON.stringify(next))
+    } catch {}
+  }
+
+  const handleSortByChange = (v: 'newest' | 'oldest' | 'urgency' | 'impact') => {
+    setSortBy(v)
+    persistFeedPreferences({ sortBy: v })
+  }
+
+  const handleFeedViewModeChange = (v: 'list' | 'grid') => {
+    setFeedViewMode(v)
+    persistFeedPreferences({ feedViewMode: v })
+  }
+
+  const feedFilterOptions = useMemo(() => {
+    const agents = new Set<string>()
+    const categories = new Set<string>()
+    const sources = new Set<string>()
+    SIGNALS.forEach((s) => {
+      agents.add(s.agent)
+      categories.add(s.category)
+      sources.add(s.source)
+    })
+    return { agents: [...agents].sort(), categories: [...categories].sort(), sources: [...sources].sort() }
+  }, [])
 
   const selectedSignal = useMemo(
     () => SIGNALS.find((s) => s.id === selectedSignalId) ?? null,
@@ -187,6 +342,8 @@ export function StockClawDashboard() {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenNotifications={() => setNotificationsOpen((o) => !o)}
         onOpenHelp={() => setHelpOpen(true)}
+        onOpenChat={() => setChatOpen(true)}
+        onSearchSubmit={handleSearchSubmit}
         notificationsOpen={notificationsOpen}
         onCloseNotifications={() => setNotificationsOpen(false)}
         notifications={MOCK_NOTIFICATIONS}
@@ -205,7 +362,7 @@ export function StockClawDashboard() {
           selectedTicker={selectedTicker}
           onSelectTicker={setSelectedTicker}
           activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
+          onFilterChange={handleFilterChange}
           onRemoveTicker={handleRemoveTicker}
           addableTickers={addableTickers}
           onAddTicker={handleAddTicker}
@@ -224,7 +381,7 @@ export function StockClawDashboard() {
           onAskAI={handleAskAI}
         />
         <CenterPanel
-          signals={filteredSignals}
+          signals={signalsAfterListView}
           selectedTicker={selectedTicker}
           selectedSignalId={selectedSignalId}
           lang={lang}
@@ -233,8 +390,28 @@ export function StockClawDashboard() {
           onRefresh={handleRefresh}
           initialRagQuery={ragPrompt}
           onRagQueryConsumed={() => setRagPrompt(null)}
+          onOpenInChat={handleOpenInChat}
+          feedFilters={feedFilters}
+          onFeedFiltersChange={setFeedFilters}
+          onClearFilters={handleClearFilters}
+          feedFilterOptions={feedFilterOptions}
+          pinnedSignalIds={pinnedSignalIds}
+          readSignalIds={readSignalIds}
+          onPin={handlePin}
+          onMarkRead={handleMarkRead}
+          feedListView={feedListView}
+          onFeedListViewChange={setFeedListView}
+          sortBy={sortBy}
+          onSortByChange={handleSortByChange}
+          feedViewMode={feedViewMode}
+          onFeedViewModeChange={handleFeedViewModeChange}
         />
-        <RightPanel signal={selectedSignal} displayTicker={displayTicker} lang={lang} />
+        <RightPanel
+          signal={selectedSignal}
+          displayTicker={displayTicker}
+          lang={lang}
+          onAskAboutSignal={handleAskAboutSignal}
+        />
       </div>
 
       {settingsOpen && (
@@ -267,6 +444,21 @@ export function StockClawDashboard() {
           feedbackHref="#feedback"
         />
       )}
+
+      <ChatSlideOver
+        isOpen={chatOpen}
+        onClose={handleChatClose}
+        onOpen={() => setChatOpen(true)}
+        lang={lang}
+        messages={chatMessages}
+        onSendMessage={handleSendChatMessage}
+        initialQuery={ragPrompt}
+        initialContext={chatContext}
+        onInitialConsumed={() => {
+          setRagPrompt(null)
+          setChatContext(null)
+        }}
+      />
     </div>
   )
 }

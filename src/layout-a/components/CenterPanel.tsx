@@ -1,10 +1,17 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { ChevronDown, RefreshCw, LayoutGrid, List } from 'lucide-react'
 import type { Signal } from '../types'
+import type { FeedFilters, FeedTimeRange } from '../types'
 import { SignalCard } from './SignalCard'
 import { RAGModule } from './RAGModule'
 
-type SortBy = 'newest' | 'oldest' | 'urgency' | 'impact'
+export type SortBy = 'newest' | 'oldest' | 'urgency' | 'impact'
+
+export interface FeedFilterOptions {
+  agents: string[]
+  categories: string[]
+  sources: string[]
+}
 
 const SORT_LABELS: Record<SortBy, string> = {
   newest: 'Newest first',
@@ -25,6 +32,21 @@ interface CenterPanelProps {
   onRefresh?: () => void
   initialRagQuery?: string | null
   onRagQueryConsumed?: () => void
+  onOpenInChat?: (query: string) => void
+  feedFilters?: FeedFilters
+  onFeedFiltersChange?: (f: FeedFilters) => void
+  onClearFilters?: () => void
+  feedFilterOptions?: FeedFilterOptions
+  pinnedSignalIds?: string[]
+  readSignalIds?: string[]
+  onPin?: (id: string) => void
+  onMarkRead?: (id: string) => void
+  feedListView?: 'all' | 'unread' | 'pinned'
+  onFeedListViewChange?: (view: 'all' | 'unread' | 'pinned') => void
+  sortBy?: SortBy
+  onSortByChange?: (v: SortBy) => void
+  feedViewMode?: 'list' | 'grid'
+  onFeedViewModeChange?: (v: 'list' | 'grid') => void
 }
 
 export function CenterPanel({
@@ -37,9 +59,24 @@ export function CenterPanel({
   onRefresh,
   initialRagQuery,
   onRagQueryConsumed,
+  onOpenInChat,
+  feedFilters = {},
+  onFeedFiltersChange,
+  onClearFilters,
+  feedFilterOptions = { agents: [], categories: [], sources: [] },
+  pinnedSignalIds = [],
+  readSignalIds = [],
+  onPin,
+  onMarkRead,
+  feedListView = 'all',
+  onFeedListViewChange,
+  sortBy: sortByProp = 'newest',
+  onSortByChange,
+  feedViewMode: feedViewModeProp = 'list',
+  onFeedViewModeChange,
 }: CenterPanelProps) {
-  const [feedViewMode, setFeedViewMode] = useState<'list' | 'grid'>('list')
-  const [sortBy, setSortBy] = useState<SortBy>('newest')
+  const sortBy = sortByProp
+  const feedViewMode = feedViewModeProp
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
   const sortRef = useRef<HTMLDivElement>(null)
   const contextLabel = selectedTicker ? `Filtered: ${selectedTicker}` : 'All watchlist'
@@ -75,6 +112,24 @@ export function CenterPanel({
       <div className="flex flex-wrap items-center gap-3 border-b border-charcoal-600 bg-charcoal-900 p-2">
         <h2 className="text-sm font-medium text-gray-200">Signal Feed</h2>
         <span className="text-xs text-gray-500">{contextLabel}</span>
+        {onFeedListViewChange && (
+          <div className="flex gap-1">
+            {(['all', 'unread', 'pinned'] as const).map((view) => (
+              <button
+                key={view}
+                type="button"
+                onClick={() => onFeedListViewChange(view)}
+                className={`rounded border px-2 py-1 text-[10px] capitalize ${
+                  feedListView === view
+                    ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
+                    : 'border-charcoal-600 bg-charcoal-800 text-gray-400 hover:border-charcoal-500 hover:text-gray-300'
+                }`}
+              >
+                {view}
+              </button>
+            ))}
+          </div>
+        )}
         <div ref={sortRef} className="relative">
           <button
             type="button"
@@ -93,7 +148,7 @@ export function CenterPanel({
                   key={key}
                   type="button"
                   onClick={() => {
-                    setSortBy(key)
+                    onSortByChange?.(key)
                     setSortDropdownOpen(false)
                   }}
                   className={`flex w-full px-3 py-1.5 text-left text-xs transition-colors hover:bg-charcoal-700 ${
@@ -109,7 +164,7 @@ export function CenterPanel({
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => setFeedViewMode('list')}
+            onClick={() => onFeedViewModeChange?.('list')}
             className={`rounded border p-1 transition-colors ${
               feedViewMode === 'list'
                 ? 'border-accent-gold bg-charcoal-700 text-accent-gold'
@@ -121,7 +176,7 @@ export function CenterPanel({
           </button>
           <button
             type="button"
-            onClick={() => setFeedViewMode('grid')}
+            onClick={() => onFeedViewModeChange?.('grid')}
             className={`rounded border p-1 transition-colors ${
               feedViewMode === 'grid'
                 ? 'border-accent-gold bg-charcoal-700 text-accent-gold'
@@ -143,14 +198,75 @@ export function CenterPanel({
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-charcoal-600 bg-charcoal-800 px-3 py-2 text-[10px]">
-        <span className="text-gray-500">ticker</span>
         <span className="text-gray-500">agent</span>
+        <select
+          value={feedFilters.agent ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, agent: e.target.value || undefined })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          {feedFilterOptions.agents.map((a) => (
+            <option key={a} value={a}>{a}</option>
+          ))}
+        </select>
         <span className="text-gray-500">urgency</span>
+        <select
+          value={feedFilters.urgency ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, urgency: (e.target.value || undefined) as FeedFilters['urgency'] })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          <option value="BREAKING">BREAKING</option>
+          <option value="DIGEST">DIGEST</option>
+          <option value="FYI">FYI</option>
+        </select>
         <span className="text-gray-500">sentiment</span>
-        <span className="text-gray-500">source type</span>
-        <span className="text-gray-500">language</span>
-        <span className="text-gray-500">time range</span>
-        <button type="button" className="text-gray-500 hover:text-gray-300">clear all</button>
+        <select
+          value={feedFilters.sentiment ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, sentiment: (e.target.value || undefined) as FeedFilters['sentiment'] })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          <option value="bullish">bullish</option>
+          <option value="bearish">bearish</option>
+          <option value="neutral">neutral</option>
+        </select>
+        <span className="text-gray-500">category</span>
+        <select
+          value={feedFilters.category ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, category: e.target.value || undefined })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          {feedFilterOptions.categories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <span className="text-gray-500">source</span>
+        <select
+          value={feedFilters.source ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, source: e.target.value || undefined })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          {feedFilterOptions.sources.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <span className="text-gray-500">time</span>
+        <select
+          value={feedFilters.timeRange ?? ''}
+          onChange={(e) => onFeedFiltersChange?.({ ...feedFilters, timeRange: (e.target.value || undefined) as FeedTimeRange | undefined })}
+          className="rounded border border-charcoal-600 bg-charcoal-900 px-1.5 py-0.5 text-gray-300 focus:border-charcoal-500 focus:outline-none"
+        >
+          <option value="">Any</option>
+          <option value="24h">24h</option>
+          <option value="7d">7d</option>
+          <option value="30d">30d</option>
+        </select>
+        {onClearFilters && (
+          <button type="button" onClick={onClearFilters} className="text-gray-500 hover:text-gray-300">clear all</button>
+        )}
       </div>
 
       {/* Signal cards */}
@@ -169,6 +285,10 @@ export function CenterPanel({
               isSelected={selectedSignalId === s.id}
               lang={lang}
               onSelect={() => onSelectSignal(s.id)}
+              isPinned={pinnedSignalIds.includes(s.id)}
+              isRead={readSignalIds.includes(s.id)}
+              onPin={onPin}
+              onMarkRead={onMarkRead}
             />
           ))}
         </div>
@@ -180,6 +300,7 @@ export function CenterPanel({
             onOpenSignal={onOpenSignalFromRAG}
             initialQuery={initialRagQuery ?? undefined}
             onQueryConsumed={onRagQueryConsumed}
+            onOpenInChat={onOpenInChat}
           />
         </div>
       </div>

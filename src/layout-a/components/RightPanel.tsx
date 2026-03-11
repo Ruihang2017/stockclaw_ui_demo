@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MessageSquare } from 'lucide-react'
 import type { Signal } from '../types'
 import { UrgencyBadge } from './UrgencyBadge'
 import { MarketReactionModule, type ChartTimeframe } from './MarketReactionModule'
@@ -11,9 +12,10 @@ interface RightPanelProps {
   signal: Signal | null
   displayTicker: string | null
   lang: 'en' | 'zh'
+  onAskAboutSignal?: (signalId: string, summary?: string) => void
 }
 
-export function RightPanel({ signal, displayTicker, lang }: RightPanelProps) {
+export function RightPanel({ signal, displayTicker, lang, onAskAboutSignal }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<RightTab>('summary')
   const [chartTimeframe, setChartTimeframe] = useState<ChartTimeframe>('1D')
 
@@ -76,6 +78,16 @@ export function RightPanel({ signal, displayTicker, lang }: RightPanelProps) {
           <p className="mt-1 text-[10px] text-gray-500">
             {signal!.publishedAt.replace('T', ' ')} · {signal!.agent} · {signal!.source} · {signal!.id}
           </p>
+          {onAskAboutSignal && (
+            <button
+              type="button"
+              onClick={() => onAskAboutSignal(signal!.id, summary)}
+              className="mt-2 flex items-center gap-1.5 text-xs text-accent-gold hover:underline"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Ask AI about this signal
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
