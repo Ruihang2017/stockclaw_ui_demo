@@ -16,8 +16,10 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, Settings, Plus, MessageSquare, Radio, MoreHorizontal, GripVertical, Trash2 } from 'lucide-react'
-import type { WatchlistTicker, WatchlistSummary, WatchlistOption } from '../types'
+import type { WatchlistTicker, WatchlistSummary, WatchlistOption, WatchlistSettings } from '../types'
 import type { FilterChipId } from '../types'
+import { EditWatchlistNameModal } from './EditWatchlistNameModal'
+import { WatchlistSettingsModal } from './WatchlistSettingsModal'
 
 interface LeftPanelProps {
   summary: WatchlistSummary
@@ -32,6 +34,14 @@ interface LeftPanelProps {
   watchlistOptions?: WatchlistOption[]
   activeWatchlistId?: string
   onWatchlistSelect?: (id: string) => void
+  onAddWatchlist?: () => void
+  onRenameWatchlist?: (id: string, newName: string) => void
+  pendingRenameWatchlistId?: string | null
+  onClearPendingRename?: () => void
+  canDeleteWatchlist?: boolean
+  onDeleteWatchlist?: (id: string) => void
+  watchlistSettings?: WatchlistSettings
+  onWatchlistSettingsSave?: (id: string, settings: WatchlistSettings) => void
   onReorderTicker?: (newOrder: string[]) => void
   onAskAI?: (query: string) => void
 }
@@ -227,12 +237,22 @@ export function LeftPanel({
   watchlistOptions = [],
   activeWatchlistId,
   onWatchlistSelect,
+  onAddWatchlist,
+  onRenameWatchlist,
+  pendingRenameWatchlistId,
+  onClearPendingRename,
+  canDeleteWatchlist,
+  onDeleteWatchlist,
+  watchlistSettings,
+  onWatchlistSettingsSave,
   onReorderTicker,
   onAskAI,
 }: LeftPanelProps) {
   const [addDropdownOpen, setAddDropdownOpen] = useState(false)
   const [watchlistDropdownOpen, setWatchlistDropdownOpen] = useState(false)
   const [manageDropdownOpen, setManageDropdownOpen] = useState(false)
+  const [editNameModalOpen, setEditNameModalOpen] = useState(false)
+  const [watchlistSettingsModalOpen, setWatchlistSettingsModalOpen] = useState(false)
   const [quickActionOpen, setQuickActionOpen] = useState<string | null>(null)
   const addDropdownRef = useRef<HTMLDivElement>(null)
   const watchlistDropdownRef = useRef<HTMLDivElement>(null)
@@ -282,6 +302,21 @@ export function LeftPanel({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [quickActionOpen])
 
+  useEffect(() => {
+    if (
+      pendingRenameWatchlistId != null &&
+      pendingRenameWatchlistId === activeWatchlistId &&
+      onRenameWatchlist &&
+      onClearPendingRename
+    ) {
+      const t = setTimeout(() => {
+        setEditNameModalOpen(true)
+        onClearPendingRename()
+      }, 0)
+      return () => clearTimeout(t)
+    }
+  }, [pendingRenameWatchlistId, activeWatchlistId, onRenameWatchlist, onClearPendingRename])
+
   const showWatchlistDropdown = watchlistOptions.length > 0 && onWatchlistSelect && activeWatchlistId != null
 
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -303,69 +338,103 @@ export function LeftPanel({
   return (
     <aside className="flex w-full flex-shrink-0 flex-col border-r border-charcoal-600 bg-charcoal-900 md:min-w-[280px] md:max-w-[300px]">
       {/* Watchlist selector: primary dropdown to change watchlist */}
-      <div className="relative border-b border-charcoal-600 p-3" ref={watchlistDropdownRef}>
+      <div className="border-b border-charcoal-600 p-3">
         <p className="mb-1 text-[10px] uppercase text-gray-500">Watchlist</p>
-        <div className="flex items-center gap-1">
-          {showWatchlistDropdown ? (
-            <button
-              type="button"
-              onClick={() => setWatchlistDropdownOpen((o) => !o)}
-              className="flex min-w-0 flex-1 items-center gap-2 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5 text-left hover:border-charcoal-500"
-            >
-              <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-200">{summary.name}</span>
-              <ChevronDown className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${watchlistDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-          ) : (
-            <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-200">{summary.name}</span>
-          )}
-          <div className="relative shrink-0" ref={manageDropdownRef}>
-            <button
-              type="button"
-              onClick={() => setManageDropdownOpen((o) => !o)}
-              className="rounded border border-charcoal-600 bg-charcoal-800 p-1.5 text-gray-500 hover:border-charcoal-500 hover:text-gray-300"
-              title="Manage watchlist"
-            >
-              <Settings className="h-3.5 w-3.5" />
-            </button>
-            {manageDropdownOpen && (
-              <div className="absolute right-0 top-full z-20 mt-0.5 min-w-[180px] rounded border border-charcoal-600 bg-charcoal-800 py-1 shadow-lg">
-                <button
-                  type="button"
-                  onClick={() => setManageDropdownOpen(false)}
-                  className="flex w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"
-                >
-                  Edit watchlist name
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setManageDropdownOpen(false)}
-                  className="flex w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"
-                >
-                  Watchlist settings
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        {watchlistDropdownOpen && showWatchlistDropdown && (
-          <div className="absolute left-3 right-3 top-full z-20 mt-0.5 rounded border border-charcoal-600 bg-charcoal-800 py-1 shadow-lg">
-            {watchlistOptions.map((w) => (
+        <div className="relative" ref={watchlistDropdownRef}>
+          <div className="flex items-center gap-1">
+            {showWatchlistDropdown ? (
               <button
-                key={w.id}
                 type="button"
-                onClick={() => {
-                  onWatchlistSelect(w.id)
-                  setWatchlistDropdownOpen(false)
-                }}
-                className={`flex w-full px-3 py-1.5 text-left text-xs transition-colors hover:bg-charcoal-700 ${
-                  w.id === activeWatchlistId ? 'bg-charcoal-700 text-accent-gold' : 'text-gray-300'
-                }`}
+                onClick={() => setWatchlistDropdownOpen((o) => !o)}
+                className="flex min-w-0 flex-1 items-center gap-2 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5 text-left hover:border-charcoal-500"
               >
-                {w.name}
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-200">{summary.name}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${watchlistDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-            ))}
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-200">{summary.name}</span>
+            )}
+            <div className="relative shrink-0" ref={manageDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setManageDropdownOpen((o) => !o)}
+                className="rounded border border-charcoal-600 bg-charcoal-800 p-1.5 text-gray-500 hover:border-charcoal-500 hover:text-gray-300"
+                title="Manage watchlist"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </button>
+              {manageDropdownOpen && (
+                <div className="absolute right-0 top-full z-20 mt-0.5 min-w-[180px] rounded border border-charcoal-600 bg-charcoal-800 py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManageDropdownOpen(false)
+                      setEditNameModalOpen(true)
+                    }}
+                    className="flex w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManageDropdownOpen(false)
+                      setWatchlistSettingsModalOpen(true)
+                    }}
+                    className="flex w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700"
+                  >
+                    Watchlist settings
+                  </button>
+                  {canDeleteWatchlist && onDeleteWatchlist && activeWatchlistId != null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManageDropdownOpen(false)
+                        onDeleteWatchlist(activeWatchlistId)
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-charcoal-700 hover:text-red-400"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+          {watchlistDropdownOpen && showWatchlistDropdown && (
+            <div className="absolute left-0 right-0 top-full z-20 mt-0.5 rounded border border-charcoal-600 bg-charcoal-800 py-1 shadow-lg">
+              {watchlistOptions.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => {
+                    onWatchlistSelect(w.id)
+                    setWatchlistDropdownOpen(false)
+                  }}
+                  className={`flex w-full px-3 py-1.5 text-left text-xs transition-colors hover:bg-charcoal-700 ${
+                    w.id === activeWatchlistId ? 'bg-charcoal-700 text-accent-gold' : 'text-gray-300'
+                  }`}
+                >
+                  {w.name}
+                </button>
+              ))}
+              {onAddWatchlist && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAddWatchlist()
+                    setWatchlistDropdownOpen(false)
+                  }}
+                  className="flex w-full items-center gap-2 border-t border-charcoal-600 px-3 py-1.5 text-left text-xs text-accent-gold hover:bg-charcoal-700"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create watchlist
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <p className="mt-1 text-xs text-gray-500">{summary.trackedCount} tracked</p>
       </div>
 
@@ -578,6 +647,32 @@ export function LeftPanel({
           </button>
         ))}
       </div>
+
+      {editNameModalOpen && onRenameWatchlist && activeWatchlistId != null && (
+        <EditWatchlistNameModal
+          isOpen={editNameModalOpen}
+          onClose={() => setEditNameModalOpen(false)}
+          watchlistId={activeWatchlistId}
+          currentName={summary.name}
+          onSave={(id, newName) => {
+            onRenameWatchlist(id, newName)
+            setEditNameModalOpen(false)
+          }}
+        />
+      )}
+      {watchlistSettingsModalOpen && onWatchlistSettingsSave && activeWatchlistId != null && watchlistSettings != null && (
+        <WatchlistSettingsModal
+          isOpen={watchlistSettingsModalOpen}
+          onClose={() => setWatchlistSettingsModalOpen(false)}
+          watchlistId={activeWatchlistId}
+          watchlistName={summary.name}
+          settings={watchlistSettings}
+          onSave={(id, s) => {
+            onWatchlistSettingsSave(id, s)
+            setWatchlistSettingsModalOpen(false)
+          }}
+        />
+      )}
     </aside>
   )
 }

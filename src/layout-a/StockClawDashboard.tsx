@@ -9,7 +9,8 @@ import { RightPanel } from './components/RightPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
 import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES, MARKET_PULSE_ITEMS } from './mockData'
-import type { FilterChipId, UserSettings, WatchlistTicker } from './types'
+import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings } from './types'
+import { DEFAULT_WATCHLIST_SETTINGS } from './types'
 
 export function StockClawDashboard() {
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('swing')
@@ -28,9 +29,22 @@ export function StockClawDashboard() {
   const [activeFilter, setActiveFilter] = useState<FilterChipId>('all')
   const [lastUpdated, setLastUpdated] = useState('8s ago')
   const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[]; order?: string[] }>>({})
+  const [watchlistNameOverrides, setWatchlistNameOverrides] = useState<Record<string, string>>({})
+  const [watchlistSettings, setWatchlistSettings] = useState<Record<string, WatchlistSettings>>({})
+  const [customWatchlists, setCustomWatchlists] = useState<{ id: string; name: string }[]>([])
+  const [pendingRenameWatchlistId, setPendingRenameWatchlistId] = useState<string | null>(null)
   const [ragPrompt, setRagPrompt] = useState<string | null>(null)
 
-  const { summary: watchlistSummary, tickers: baseWatchlistTickers } = WATCHLIST_BY_ID[activeWatchlistId] ?? WATCHLIST_BY_ID['swing']
+  const baseWatchlistData = WATCHLIST_BY_ID[activeWatchlistId]
+  const watchlistSummary = baseWatchlistData?.summary ?? {
+    name: watchlistNameOverrides[activeWatchlistId] ?? customWatchlists.find((w) => w.id === activeWatchlistId)?.name ?? 'New Watchlist',
+    trackedCount: 0,
+    signalsToday: 0,
+    breakingCount: 0,
+    bullishRatio: 0,
+    mostActiveAgent: '',
+  }
+  const baseWatchlistTickers = baseWatchlistData?.tickers ?? []
 
   const displayTickers = useMemo(() => {
     const base = baseWatchlistTickers ?? []
@@ -49,8 +63,49 @@ export function StockClawDashboard() {
 
   const displaySummary = useMemo(() => {
     if (!watchlistSummary) return watchlistSummary
-    return { ...watchlistSummary, trackedCount: displayTickers.length }
-  }, [watchlistSummary, displayTickers.length])
+    return {
+      ...watchlistSummary,
+      name: watchlistNameOverrides[activeWatchlistId] ?? watchlistSummary.name,
+      trackedCount: displayTickers.length,
+    }
+  }, [watchlistSummary, activeWatchlistId, watchlistNameOverrides, displayTickers.length])
+
+  const watchlistOptionsWithOverrides = useMemo(
+    () => [
+      ...MOCK_WATCHLISTS.map((w) => ({ ...w, name: watchlistNameOverrides[w.id] ?? w.name })),
+      ...customWatchlists.map((w) => ({ ...w, name: watchlistNameOverrides[w.id] ?? w.name })),
+    ],
+    [watchlistNameOverrides, customWatchlists]
+  )
+
+  const handleAddWatchlist = () => {
+    const id = `custom-${Date.now()}`
+    setCustomWatchlists((prev) => [...prev, { id, name: 'New Watchlist' }])
+    setActiveWatchlistId(id)
+    setPendingRenameWatchlistId(id)
+  }
+
+  const handleDeleteWatchlist = (id: string) => {
+    setCustomWatchlists((prev) => prev.filter((w) => w.id !== id))
+    if (activeWatchlistId === id) {
+      setActiveWatchlistId(MOCK_WATCHLISTS[0]?.id ?? 'swing')
+    }
+    setWatchlistNameOverrides((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setWatchlistSettings((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setWatchlistEdits((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
 
   const addableTickers = useMemo(
     () => ADDABLE_TICKERS.filter((t) => !displayTickers.some((d) => d.symbol === t.symbol)),
@@ -154,9 +209,17 @@ export function StockClawDashboard() {
           onRemoveTicker={handleRemoveTicker}
           addableTickers={addableTickers}
           onAddTicker={handleAddTicker}
-          watchlistOptions={MOCK_WATCHLISTS}
+          watchlistOptions={watchlistOptionsWithOverrides}
           activeWatchlistId={activeWatchlistId}
           onWatchlistSelect={setActiveWatchlistId}
+          onAddWatchlist={handleAddWatchlist}
+          onRenameWatchlist={(id, newName) => setWatchlistNameOverrides((prev) => ({ ...prev, [id]: newName }))}
+          pendingRenameWatchlistId={pendingRenameWatchlistId}
+          onClearPendingRename={() => setPendingRenameWatchlistId(null)}
+          canDeleteWatchlist={customWatchlists.some((w) => w.id === activeWatchlistId)}
+          onDeleteWatchlist={handleDeleteWatchlist}
+          watchlistSettings={watchlistSettings[activeWatchlistId] ?? DEFAULT_WATCHLIST_SETTINGS}
+          onWatchlistSettingsSave={(id, s) => setWatchlistSettings((prev) => ({ ...prev, [id]: s }))}
           onReorderTicker={handleReorderTicker}
           onAskAI={handleAskAI}
         />
@@ -191,7 +254,7 @@ export function StockClawDashboard() {
             setUserSettings((s) => ({ ...s, [key]: value }))
           }
           defaultWatchlistId={activeWatchlistId}
-          watchlistOptions={MOCK_WATCHLISTS}
+          watchlistOptions={watchlistOptionsWithOverrides}
           onDefaultWatchlistChange={setActiveWatchlistId}
           feedbackHref="#feedback"
         />

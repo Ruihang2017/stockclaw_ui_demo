@@ -124,6 +124,30 @@ export interface WatchlistOption {
   name: string
 }
 
+export type WatchlistSentimentFilter = 'all' | 'bullish' | 'bearish' | 'neutral'
+
+export interface WatchlistSettings {
+  notifyBreaking: boolean
+  notifyDigest: boolean
+  minImpactScore: number
+  minConfidence: number
+  sentimentFilter: WatchlistSentimentFilter
+  includeMacro: boolean
+  includeEarnings: boolean
+  includePolicy: boolean
+}
+
+export const DEFAULT_WATCHLIST_SETTINGS: WatchlistSettings = {
+  notifyBreaking: true,
+  notifyDigest: false,
+  minImpactScore: 1,
+  minConfidence: 0,
+  sentimentFilter: 'all',
+  includeMacro: true,
+  includeEarnings: true,
+  includePolicy: true,
+}
+
 export interface NotificationItem {
   id: string
   title: string
