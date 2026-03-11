@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Search, ExternalLink } from 'lucide-react'
 import type { RAGResult } from '../types'
 import { RAG_MOCK } from '../mockData'
@@ -5,10 +6,23 @@ import { RAG_MOCK } from '../mockData'
 interface RAGModuleProps {
   lang: 'en' | 'zh'
   onOpenSignal?: (signalId: string) => void
+  initialQuery?: string
+  onQueryConsumed?: () => void
 }
 
-export function RAGModule({ lang, onOpenSignal }: RAGModuleProps) {
+export function RAGModule({ lang, onOpenSignal, initialQuery, onQueryConsumed }: RAGModuleProps) {
   const data: RAGResult = RAG_MOCK
+  const [query, setQuery] = useState(initialQuery ?? data.query)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery)
+      onQueryConsumed?.()
+      inputRef.current?.focus()
+    }
+  }, [initialQuery, onQueryConsumed])
+
   const answerSummary = lang === 'zh' ? data.answerSummaryZh : data.answerSummary
 
   const tickersLabel = data.tickersInvolved?.length
@@ -23,8 +37,10 @@ export function RAGModule({ lang, onOpenSignal }: RAGModuleProps) {
         <div className="flex flex-1 items-center gap-2 rounded border border-charcoal-600 bg-charcoal-900 px-2 py-1.5">
           <Search className="h-4 w-4 text-gray-500" />
           <input
+            ref={inputRef}
             type="text"
-            defaultValue={data.query}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             className="min-w-0 flex-1 bg-transparent text-xs text-gray-200 placeholder:text-gray-500 focus:outline-none"
             placeholder="Ask about historical signals..."
           />

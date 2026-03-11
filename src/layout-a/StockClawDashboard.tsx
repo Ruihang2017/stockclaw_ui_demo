@@ -27,7 +27,8 @@ export function StockClawDashboard() {
   const [lang, setLang] = useState<'en' | 'zh'>('en')
   const [activeFilter, setActiveFilter] = useState<FilterChipId>('all')
   const [lastUpdated, setLastUpdated] = useState('8s ago')
-  const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[] }>>({})
+  const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[]; order?: string[] }>>({})
+  const [ragPrompt, setRagPrompt] = useState<string | null>(null)
 
   const { summary: watchlistSummary, tickers: baseWatchlistTickers } = WATCHLIST_BY_ID[activeWatchlistId] ?? WATCHLIST_BY_ID['swing']
 
@@ -36,7 +37,14 @@ export function StockClawDashboard() {
     const edits = watchlistEdits[activeWatchlistId]
     const removed = edits?.removed ?? []
     const added = edits?.added ?? []
-    return [...base.filter((t) => !removed.includes(t.symbol)), ...added]
+    const order = edits?.order
+    const list = [...base.filter((t) => !removed.includes(t.symbol)), ...added]
+    if (!order?.length) return list
+    const orderSet = new Set(order)
+    const tickerBySymbol = new Map(list.map((t) => [t.symbol, t]))
+    const inOrder = order.filter((s) => tickerBySymbol.has(s)).map((s) => tickerBySymbol.get(s)!)
+    const rest = list.filter((t) => !orderSet.has(t.symbol))
+    return [...inOrder, ...rest]
   }, [activeWatchlistId, baseWatchlistTickers, watchlistEdits])
 
   const displaySummary = useMemo(() => {
@@ -70,6 +78,18 @@ export function StockClawDashboard() {
         [id]: { ...current, added: [...current.added, ticker] },
       }
     })
+  }
+
+  const handleReorderTicker = (newOrder: string[]) => {
+    setWatchlistEdits((prev) => {
+      const id = activeWatchlistId
+      const current = prev[id] ?? { removed: [], added: [] }
+      return { ...prev, [id]: { ...current, order: newOrder } }
+    })
+  }
+
+  const handleAskAI = (query: string) => {
+    setRagPrompt(query)
   }
 
   const handleRefresh = () => {
@@ -106,9 +126,6 @@ export function StockClawDashboard() {
   return (
     <div className="flex h-screen flex-col bg-charcoal-950 text-gray-200">
       <Header
-        watchlistOptions={MOCK_WATCHLISTS}
-        activeWatchlistId={activeWatchlistId}
-        onWatchlistSelect={setActiveWatchlistId}
         newSignalsCount={watchlistSummary.signalsToday}
         lang={lang}
         onLangToggle={() => setLang((l) => (l === 'en' ? 'zh' : 'en'))}
@@ -137,6 +154,11 @@ export function StockClawDashboard() {
           onRemoveTicker={handleRemoveTicker}
           addableTickers={addableTickers}
           onAddTicker={handleAddTicker}
+          watchlistOptions={MOCK_WATCHLISTS}
+          activeWatchlistId={activeWatchlistId}
+          onWatchlistSelect={setActiveWatchlistId}
+          onReorderTicker={handleReorderTicker}
+          onAskAI={handleAskAI}
         />
         <CenterPanel
           signals={filteredSignals}
@@ -146,6 +168,8 @@ export function StockClawDashboard() {
           onSelectSignal={setSelectedSignalId}
           onOpenSignalFromRAG={handleOpenSignalFromRAG}
           onRefresh={handleRefresh}
+          initialRagQuery={ragPrompt}
+          onRagQueryConsumed={() => setRagPrompt(null)}
         />
         <RightPanel signal={selectedSignal} displayTicker={displayTicker} lang={lang} />
       </div>

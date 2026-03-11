@@ -23,6 +23,8 @@ interface CenterPanelProps {
   onSelectSignal: (id: string) => void
   onOpenSignalFromRAG?: (signalId: string) => void
   onRefresh?: () => void
+  initialRagQuery?: string | null
+  onRagQueryConsumed?: () => void
 }
 
 export function CenterPanel({
@@ -33,6 +35,8 @@ export function CenterPanel({
   onSelectSignal,
   onOpenSignalFromRAG,
   onRefresh,
+  initialRagQuery,
+  onRagQueryConsumed,
 }: CenterPanelProps) {
   const [feedViewMode, setFeedViewMode] = useState<'list' | 'grid'>('list')
   const [sortBy, setSortBy] = useState<SortBy>('newest')
@@ -171,7 +175,12 @@ export function CenterPanel({
 
         {/* RAG module */}
         <div className="mt-6">
-          <RAGModule lang={lang} onOpenSignal={onOpenSignalFromRAG} />
+          <RAGModule
+            lang={lang}
+            onOpenSignal={onOpenSignalFromRAG}
+            initialQuery={initialRagQuery ?? undefined}
+            onQueryConsumed={onRagQueryConsumed}
+          />
         </div>
       </div>
     </main>
