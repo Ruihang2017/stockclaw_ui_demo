@@ -1,18 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
-import {
-  Search,
-  Bell,
-  Settings,
-  ChevronDown,
-  Radio,
-} from 'lucide-react'
-import type { WatchlistOption, NotificationItem } from '../types'
+import { useRef } from 'react'
+import { Search, Bell, Settings, Radio } from 'lucide-react'
+import type { NotificationItem } from '../types'
 import { NotificationsDropdown } from './NotificationsDropdown'
 
 interface HeaderProps {
-  watchlistOptions: WatchlistOption[]
-  activeWatchlistId: string
-  onWatchlistSelect: (id: string) => void
   newSignalsCount: number
   lang: 'en' | 'zh'
   onLangToggle: () => void
@@ -25,9 +16,6 @@ interface HeaderProps {
 }
 
 export function Header({
-  watchlistOptions,
-  activeWatchlistId,
-  onWatchlistSelect,
   newSignalsCount,
   lang,
   onLangToggle,
@@ -38,55 +26,11 @@ export function Header({
   onCloseNotifications,
   notifications,
 }: HeaderProps) {
-  const [watchlistDropdownOpen, setWatchlistDropdownOpen] = useState(false)
-  const watchlistRef = useRef<HTMLDivElement>(null)
   const notificationsRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!watchlistDropdownOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (watchlistRef.current && !watchlistRef.current.contains(e.target as Node)) {
-        setWatchlistDropdownOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [watchlistDropdownOpen])
-
-  const watchlistName = watchlistOptions.find((w) => w.id === activeWatchlistId)?.name ?? 'Watchlist'
 
   return (
     <header className="flex h-11 items-center gap-4 border-b border-charcoal-600 bg-charcoal-900 px-4 shadow-panel">
       <span className="text-sm font-semibold text-accent-gold">StockClaw</span>
-      <div ref={watchlistRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setWatchlistDropdownOpen((o) => !o)}
-          className="flex items-center gap-2 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5 text-xs text-left hover:border-charcoal-500"
-        >
-          <span className="text-gray-300">{watchlistName}</span>
-          <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-gray-500 transition-transform ${watchlistDropdownOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {watchlistDropdownOpen && (
-          <div className="absolute left-0 top-full z-10 mt-0.5 min-w-[180px] rounded border border-charcoal-600 bg-charcoal-800 py-1 shadow-panel">
-            {watchlistOptions.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                onClick={() => {
-                  onWatchlistSelect(w.id)
-                  setWatchlistDropdownOpen(false)
-                }}
-                className={`flex w-full px-3 py-1.5 text-left text-xs transition-colors hover:bg-charcoal-700 ${
-                  w.id === activeWatchlistId ? 'bg-charcoal-700 text-accent-gold' : 'text-gray-300'
-                }`}
-              >
-                {w.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
       <div className="flex flex-1 items-center gap-2">
         <div className="flex flex-1 max-w-md items-center gap-2 rounded border border-charcoal-600 bg-charcoal-800 px-2 py-1.5">
           <Search className="h-3.5 w-3.5 text-gray-500" />
