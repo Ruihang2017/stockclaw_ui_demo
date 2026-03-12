@@ -123,32 +123,60 @@ export const MARKET_INDEXES: MarketIndex[] = [
   { name: 'SOX', symbol: 'SOX', value: 4521.0, changePercent: 0.65, trend: sparkline(4510, 0.65) },
 ]
 
-// Stock price and mini-chart data per symbol. trend arrays: 1D ~30 pts, 5D ~20, 1M ~22.
-function trend1D(price: number, changePct: number, n = 30): number[] {
-  const out: number[] = []
+// Stock price trend arrays: many points + deterministic noise so charts look realistic.
+// 1D: ~78 points (e.g. 5-min bars), 5D: ~65, 1M: ~22 daily bars.
+function trend1D(price: number, changePct: number, n = 78): number[] {
   const mult = (changePct / 100) * price
+  const out: number[] = []
+  const seed = (price * 0.001 + changePct) % 100
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1)
-    out.push(price - mult + (mult * t) + (Math.sin(t * Math.PI) * price * 0.002))
+    const linear = price - mult + mult * t
+    // High-frequency intraday noise (multiple waves so path is jagged, not smooth)
+    const noise =
+      Math.sin((i + seed) * 0.8) * price * 0.0015 +
+      Math.sin((i + seed * 2) * 1.7) * price * 0.001 +
+      Math.sin((i + seed * 0.5) * 2.9) * price * 0.0008 +
+      Math.sin((i * 0.4 + seed)) * price * 0.0012
+    out.push(linear + noise)
   }
+  // Pin first and last to match open/close
+  out[0] = price - mult
+  out[n - 1] = price
   return out
 }
-function trend5D(price: number, changePct: number, n = 20): number[] {
-  const out: number[] = []
+function trend5D(price: number, changePct: number, n = 65): number[] {
   const mult = (changePct / 100) * price * 0.6
+  const out: number[] = []
+  const seed = (price * 0.002 + changePct * 2) % 100
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1)
-    out.push(price - mult + (mult * t) + (Math.sin(t * 2) * price * 0.005))
+    const linear = price - mult + mult * t
+    const noise =
+      Math.sin((i + seed) * 0.5) * price * 0.004 +
+      Math.sin((i + seed * 1.3) * 1.1) * price * 0.003 +
+      Math.sin((i * 0.3 + seed * 0.7)) * price * 0.002
+    out.push(linear + noise)
   }
+  out[0] = price - mult
+  out[n - 1] = price
   return out
 }
 function trend1M(price: number, changePct: number, n = 22): number[] {
-  const out: number[] = []
   const mult = (changePct / 100) * price * 1.2
+  const out: number[] = []
+  const seed = (price * 0.003 + changePct * 3) % 100
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1)
-    out.push(price - mult + (mult * t) + (Math.sin(t * 3) * price * 0.008))
+    const linear = price - mult + mult * t
+    // Daily bars: smaller wiggles
+    const noise =
+      Math.sin((i + seed) * 0.6) * price * 0.006 +
+      Math.sin((i * 0.4 + seed * 1.2)) * price * 0.004
+    out.push(linear + noise)
   }
+  out[0] = price - mult
+  out[n - 1] = price
   return out
 }
 
