@@ -30,6 +30,34 @@ export interface StockPriceData {
   trend1M: number[]
   volume?: number
   relativeStrengthLabel?: string
+  /** Share price activity (optional) */
+  bid?: number
+  ask?: number
+  open?: number
+  dayHigh?: number
+  dayLow?: number
+  prevClose?: number
+  volume4wAvg?: number
+  turnover?: number
+  lastTradeTime?: string
+  vwap?: number
+}
+
+export interface SnapshotPerformance {
+  week1?: number
+  month1?: number
+  ytd?: number
+  year1?: number
+  vsSector1y?: number
+  vsIndex1y?: number
+}
+
+export interface BrokerConsensus {
+  buyCount: number
+  holdCount: number
+  sellCount: number
+  recommendation: string
+  lastUpdated: string
 }
 
 export interface CompanyFundamentals {
@@ -47,6 +75,14 @@ export interface CompanyFundamentals {
   nextEarnings: string | null
   beta: number | null
   dividendYield?: string | null
+  /** Key fundamentals (optional) */
+  eps?: number | null
+  dps?: number | null
+  bookValuePerShare?: number | null
+  similarCompanies?: string | null
+  /** Size (optional) */
+  marketRank?: number | null
+  sectorRank?: number | null
 }
 
 export interface WatchlistSummary {

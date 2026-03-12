@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { StatusStrip } from './components/StatusStrip'
 import { MarketContextStrip } from './components/MarketContextStrip'
@@ -10,7 +11,8 @@ import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
 import { ChatSlideOver } from './components/ChatSlideOver'
 import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES, MARKET_PULSE_ITEMS } from './mockData'
-import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings, ChatMessage, ChatContext, FeedFilters, FeedTimeRange } from './types'
+import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings, ChatContext, FeedFilters, FeedTimeRange } from './types'
+import { useChat } from './context/ChatContext'
 import { DEFAULT_WATCHLIST_SETTINGS } from './types'
 
 function chipToFeedFilters(chipId: FilterChipId): Partial<FeedFilters> {
@@ -42,6 +44,8 @@ function isWithinTimeRange(publishedAt: string, timeRange: FeedTimeRange): boole
 }
 
 export function StockClawDashboard() {
+  const navigate = useNavigate()
+  const { activeMessages, sendMessage, newChat } = useChat()
   const [activeWatchlistId, setActiveWatchlistId] = useState<string>('swing')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -65,7 +69,6 @@ export function StockClawDashboard() {
   const [pendingRenameWatchlistId, setPendingRenameWatchlistId] = useState<string | null>(null)
   const [ragPrompt, setRagPrompt] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatContext, setChatContext] = useState<ChatContext | null>(null)
   const [pinnedSignalIds, setPinnedSignalIds] = useState<string[]>(() => {
     try {
@@ -216,22 +219,7 @@ export function StockClawDashboard() {
   }
 
   const handleSearchSubmit = (query: string) => {
-    setRagPrompt(query)
-    setChatContext(null)
-    setChatOpen(true)
-  }
-
-  const handleOpenInChat = (query: string) => {
-    setRagPrompt(query)
-    setChatOpen(true)
-  }
-
-  const handleSendChatMessage = (content: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      { role: 'user', content },
-      { role: 'assistant', content: 'This is a placeholder reply. In production, this would call your RAG/agent API.' },
-    ])
+    navigate('/chat', { state: { initialQuery: query } })
   }
 
   const handleChatClose = () => {
@@ -329,10 +317,6 @@ export function StockClawDashboard() {
 
   const displayTicker = selectedTicker ?? selectedSignal?.tickers?.[0] ?? null
 
-  const handleOpenSignalFromRAG = (signalId: string) => {
-    setSelectedSignalId(signalId)
-  }
-
   return (
     <div className="flex h-screen flex-col bg-charcoal-950 text-gray-200">
       <Header
@@ -342,7 +326,7 @@ export function StockClawDashboard() {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenNotifications={() => setNotificationsOpen((o) => !o)}
         onOpenHelp={() => setHelpOpen(true)}
-        onOpenChat={() => setChatOpen(true)}
+        onOpenChat={() => navigate('/chat')}
         onSearchSubmit={handleSearchSubmit}
         notificationsOpen={notificationsOpen}
         onCloseNotifications={() => setNotificationsOpen(false)}
@@ -386,11 +370,7 @@ export function StockClawDashboard() {
           selectedSignalId={selectedSignalId}
           lang={lang}
           onSelectSignal={setSelectedSignalId}
-          onOpenSignalFromRAG={handleOpenSignalFromRAG}
           onRefresh={handleRefresh}
-          initialRagQuery={ragPrompt}
-          onRagQueryConsumed={() => setRagPrompt(null)}
-          onOpenInChat={handleOpenInChat}
           feedFilters={feedFilters}
           onFeedFiltersChange={setFeedFilters}
           onClearFilters={handleClearFilters}
@@ -405,12 +385,11 @@ export function StockClawDashboard() {
           onSortByChange={handleSortByChange}
           feedViewMode={feedViewMode}
           onFeedViewModeChange={handleFeedViewModeChange}
+          selectedSignal={selectedSignal}
+          onAskAboutSignal={handleAskAboutSignal}
         />
         <RightPanel
-          signal={selectedSignal}
           displayTicker={displayTicker}
-          lang={lang}
-          onAskAboutSignal={handleAskAboutSignal}
         />
       </div>
 
@@ -450,14 +429,15 @@ export function StockClawDashboard() {
         onClose={handleChatClose}
         onOpen={() => setChatOpen(true)}
         lang={lang}
-        messages={chatMessages}
-        onSendMessage={handleSendChatMessage}
+        messages={activeMessages}
+        onSendMessage={sendMessage}
         initialQuery={ragPrompt}
         initialContext={chatContext}
         onInitialConsumed={() => {
           setRagPrompt(null)
           setChatContext(null)
         }}
+        onNewChat={newChat}
       />
     </div>
   )

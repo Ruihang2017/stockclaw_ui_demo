@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { ChevronDown, RefreshCw, LayoutGrid, List } from 'lucide-react'
+import { ChevronDown, RefreshCw, LayoutGrid, List, MessageSquare } from 'lucide-react'
 import type { Signal } from '../types'
 import type { FeedFilters, FeedTimeRange } from '../types'
 import { SignalCard } from './SignalCard'
-import { RAGModule } from './RAGModule'
 
 export type SortBy = 'newest' | 'oldest' | 'urgency' | 'impact'
 
@@ -28,11 +27,7 @@ interface CenterPanelProps {
   selectedSignalId: string | null
   lang: 'en' | 'zh'
   onSelectSignal: (id: string) => void
-  onOpenSignalFromRAG?: (signalId: string) => void
   onRefresh?: () => void
-  initialRagQuery?: string | null
-  onRagQueryConsumed?: () => void
-  onOpenInChat?: (query: string) => void
   feedFilters?: FeedFilters
   onFeedFiltersChange?: (f: FeedFilters) => void
   onClearFilters?: () => void
@@ -47,6 +42,8 @@ interface CenterPanelProps {
   onSortByChange?: (v: SortBy) => void
   feedViewMode?: 'list' | 'grid'
   onFeedViewModeChange?: (v: 'list' | 'grid') => void
+  selectedSignal?: Signal | null
+  onAskAboutSignal?: (signalId: string, summary?: string) => void
 }
 
 export function CenterPanel({
@@ -55,11 +52,7 @@ export function CenterPanel({
   selectedSignalId,
   lang,
   onSelectSignal,
-  onOpenSignalFromRAG,
   onRefresh,
-  initialRagQuery,
-  onRagQueryConsumed,
-  onOpenInChat,
   feedFilters = {},
   onFeedFiltersChange,
   onClearFilters,
@@ -74,10 +67,14 @@ export function CenterPanel({
   onSortByChange,
   feedViewMode: feedViewModeProp = 'list',
   onFeedViewModeChange,
+  selectedSignal = null,
+  onAskAboutSignal,
 }: CenterPanelProps) {
   const sortBy = sortByProp
   const feedViewMode = feedViewModeProp
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
+  type SignalDetailTab = 'summary' | 'evidence' | 'history'
+  const [signalDetailTab, setSignalDetailTab] = useState<SignalDetailTab>('summary')
   const sortRef = useRef<HTMLDivElement>(null)
   const contextLabel = selectedTicker ? `Filtered: ${selectedTicker}` : 'All watchlist'
 
@@ -105,6 +102,10 @@ export function CenterPanel({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [sortDropdownOpen])
+
+  useEffect(() => {
+    setSignalDetailTab('summary')
+  }, [selectedSignalId])
 
   return (
     <main className="flex min-w-[320px] flex-1 flex-col overflow-hidden">
@@ -278,30 +279,112 @@ export function CenterPanel({
               : 'grid grid-cols-1 gap-2 md:grid-cols-2'
           }
         >
-          {sortedSignals.map((s) => (
-            <SignalCard
-              key={s.id}
-              signal={s}
-              isSelected={selectedSignalId === s.id}
-              lang={lang}
-              onSelect={() => onSelectSignal(s.id)}
-              isPinned={pinnedSignalIds.includes(s.id)}
-              isRead={readSignalIds.includes(s.id)}
-              onPin={onPin}
-              onMarkRead={onMarkRead}
-            />
-          ))}
-        </div>
-
-        {/* RAG module */}
-        <div className="mt-6">
-          <RAGModule
-            lang={lang}
-            onOpenSignal={onOpenSignalFromRAG}
-            initialQuery={initialRagQuery ?? undefined}
-            onQueryConsumed={onRagQueryConsumed}
-            onOpenInChat={onOpenInChat}
-          />
+          {sortedSignals.map((s) => {
+            const isSelected = selectedSignalId === s.id && selectedSignal && selectedSignal.id === s.id
+            const card = (
+              <SignalCard
+                signal={s}
+                isSelected={selectedSignalId === s.id}
+                lang={lang}
+                onSelect={() => onSelectSignal(s.id)}
+                isPinned={pinnedSignalIds.includes(s.id)}
+                isRead={readSignalIds.includes(s.id)}
+                onPin={onPin}
+                onMarkRead={onMarkRead}
+                hideBorder={isSelected}
+              />
+            )
+            const expandedBlock = isSelected && (
+              <div className="border-t border-charcoal-600/80">
+                <div className="flex flex-wrap items-center gap-2 border-b border-charcoal-600/80 px-3 py-2">
+                  {onAskAboutSignal && (
+                    <button
+                      type="button"
+                      onClick={() => onAskAboutSignal(selectedSignal!.id, lang === 'zh' ? selectedSignal!.summaryZh : selectedSignal!.summaryEn)}
+                      className="flex items-center gap-1.5 text-xs text-accent-gold hover:underline"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Ask AI about this signal
+                    </button>
+                  )}
+                </div>
+                <div className="flex border-b border-charcoal-600/80">
+                  {(['summary', 'evidence', 'history'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setSignalDetailTab(tab)}
+                      className={`px-3 py-2 text-[10px] font-medium uppercase transition-colors ${
+                        signalDetailTab === tab
+                          ? 'border-b-2 border-accent-gold text-accent-gold'
+                          : 'text-gray-500 hover:text-gray-300'
+                      }`}
+                    >
+                      {tab === 'summary' ? 'Summary' : tab === 'evidence' ? 'Evidence' : 'History'}
+                    </button>
+                  ))}
+                </div>
+                <div className="max-h-[50vh] overflow-y-auto p-3">
+                  {signalDetailTab === 'summary' && (
+                    <div className="space-y-3">
+                      <section>
+                        <h3 className="text-[10px] uppercase text-gray-500">Why it matters</h3>
+                        <p className="mt-1 text-xs text-gray-300">{selectedSignal!.whyItMatters}</p>
+                      </section>
+                      <section>
+                        <h3 className="text-[10px] uppercase text-gray-500">Reasoning chain</h3>
+                        <ol className="mt-2 list-decimal space-y-1.5 pl-4 text-xs text-gray-300">
+                          {selectedSignal!.reasoningSteps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </section>
+                    </div>
+                  )}
+                  {signalDetailTab === 'evidence' && (
+                    <div>
+                      <h3 className="text-[10px] uppercase text-gray-500">Evidence transparency</h3>
+                      <dl className="mt-2 space-y-1 text-[10px]">
+                        <div className="flex justify-between"><dt className="text-gray-500">Source type</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.sourceType}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Source publish</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.sourcePublishTime}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Extraction time</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.extractionTime}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Ticker matching</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.tickerMatchingLogic}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Confidence</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.confidence}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Relevance</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.relevance}</dd></div>
+                        <div className="flex justify-between"><dt className="text-gray-500">Related evidence</dt><dd className="text-gray-300">{selectedSignal!.evidenceMeta.relatedEvidenceCount}</dd></div>
+                      </dl>
+                    </div>
+                  )}
+                  {signalDetailTab === 'history' && (
+                    <div>
+                      <h3 className="text-[10px] uppercase text-gray-500">Related historical signals</h3>
+                      <ul className="mt-2 space-y-2">
+                        {selectedSignal!.relatedHistory.map((h, i) => (
+                          <li key={i} className="rounded border border-charcoal-600 bg-charcoal-900 p-2 text-[10px]">
+                            <p className="text-gray-300">{h.summary}</p>
+                            <p className="mt-1 text-gray-500">{h.date} · similarity {h.similarityScore}</p>
+                            {h.marketReaction && <p className="text-gray-500">{h.marketReaction}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+            return (
+              <div key={s.id} className={feedViewMode === 'grid' ? 'contents' : undefined}>
+                {isSelected ? (
+                  <div className={`rounded border border-charcoal-600 bg-charcoal-800 overflow-hidden ${feedViewMode === 'grid' ? 'md:col-span-2' : ''}`}>
+                    {card}
+                    {expandedBlock}
+                  </div>
+                ) : (
+                  card
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </main>

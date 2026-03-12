@@ -12,6 +12,7 @@ interface ChatSlideOverProps {
   initialQuery?: string | null
   initialContext?: ChatContext | null
   onInitialConsumed?: () => void
+  onNewChat?: () => void
 }
 
 function contextLabel(ctx: ChatContext): string {
@@ -28,6 +29,7 @@ export function ChatSlideOver({
   initialQuery,
   initialContext,
   onInitialConsumed,
+  onNewChat,
 }: ChatSlideOverProps) {
   const [inputValue, setInputValue] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -61,14 +63,25 @@ export function ChatSlideOver({
     <>
         <div className="flex shrink-0 items-center justify-between border-b border-charcoal-600 px-4 py-3">
           <h2 className="text-sm font-medium text-gray-200">Ask StockClaw</h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="rounded p-1 text-gray-500 hover:bg-charcoal-700 hover:text-gray-300"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {onNewChat && (
+              <button
+                type="button"
+                onClick={() => { setInputValue(''); onNewChat() }}
+                className="rounded px-2 py-1 text-[10px] text-gray-400 hover:bg-charcoal-700 hover:text-gray-200"
+              >
+                New Chat
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="rounded p-1 text-gray-500 hover:bg-charcoal-700 hover:text-gray-300"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         {initialContext && (
           <div className="shrink-0 border-b border-charcoal-600 px-4 py-2 text-[10px] uppercase text-gray-500">

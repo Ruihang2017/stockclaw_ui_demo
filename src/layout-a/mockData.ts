@@ -1,4 +1,4 @@
-import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals, WatchlistOption, NotificationItem, MarketPulseItem } from './types'
+import type { WatchlistTicker, WatchlistSummary, Signal, RAGResult, MarketIndex, StockPriceData, CompanyFundamentals, SnapshotPerformance, BrokerConsensus, WatchlistOption, NotificationItem, MarketPulseItem } from './types'
 
 export const WATCHLIST_SUMMARY: WatchlistSummary = {
   name: 'My Swing Watchlist',
@@ -153,10 +153,10 @@ function trend1M(price: number, changePct: number, n = 22): number[] {
 }
 
 export const STOCK_PRICE_BY_SYMBOL: Record<string, StockPriceData> = {
-  NVDA: { currentPrice: 912.45, dailyChange: 16.12, dailyChangePercent: 1.8, trend1D: trend1D(912.45, 1.8), trend5D: trend5D(912.45, 1.8), trend1M: trend1M(912.45, 1.8), volume: 42_500_000, relativeStrengthLabel: 'Outperforming SOX +1.2%' },
-  AMD: { currentPrice: 178.32, dailyChange: -0.71, dailyChangePercent: -0.4, trend1D: trend1D(178.32, -0.4), trend5D: trend5D(178.32, -0.4), trend1M: trend1M(178.32, -0.4), volume: 58_200_000, relativeStrengthLabel: 'In line with SOX' },
-  TSM: { currentPrice: 142.88, dailyChange: 1.14, dailyChangePercent: 0.8, trend1D: trend1D(142.88, 0.8), trend5D: trend5D(142.88, 0.8), trend1M: trend1M(142.88, 0.8), volume: 22_100_000, relativeStrengthLabel: 'Outperforming HSCEI +0.5%' },
-  AAPL: { currentPrice: 228.15, dailyChange: 0.46, dailyChangePercent: 0.2, trend1D: trend1D(228.15, 0.2), trend5D: trend5D(228.15, 0.2), trend1M: trend1M(228.15, 0.2), volume: 48_000_000, relativeStrengthLabel: 'In line with SPX' },
+  NVDA: { currentPrice: 912.45, dailyChange: 16.12, dailyChangePercent: 1.8, trend1D: trend1D(912.45, 1.8), trend5D: trend5D(912.45, 1.8), trend1M: trend1M(912.45, 1.8), volume: 42_500_000, relativeStrengthLabel: 'Outperforming SOX +1.2%', bid: 912.40, ask: 912.50, open: 898.20, dayHigh: 915.00, dayLow: 895.80, prevClose: 896.33, volume4wAvg: 38_200_000, turnover: 38_812_500_000, vwap: 911.20, lastTradeTime: '2025-03-09T20:45:00Z' },
+  AMD: { currentPrice: 178.32, dailyChange: -0.71, dailyChangePercent: -0.4, trend1D: trend1D(178.32, -0.4), trend5D: trend5D(178.32, -0.4), trend1M: trend1M(178.32, -0.4), volume: 58_200_000, relativeStrengthLabel: 'In line with SOX', bid: 178.30, ask: 178.35, open: 179.10, dayHigh: 179.50, dayLow: 177.90, prevClose: 179.03, volume4wAvg: 52_000_000, turnover: 10_374_024_000, vwap: 178.50, lastTradeTime: '2025-03-09T20:44:00Z' },
+  TSM: { currentPrice: 142.88, dailyChange: 1.14, dailyChangePercent: 0.8, trend1D: trend1D(142.88, 0.8), trend5D: trend5D(142.88, 0.8), trend1M: trend1M(142.88, 0.8), volume: 22_100_000, relativeStrengthLabel: 'Outperforming HSCEI +0.5%', bid: 142.85, ask: 142.90, open: 141.50, dayHigh: 143.20, dayLow: 141.20, prevClose: 141.74, volume4wAvg: 20_000_000, turnover: 3_157_648_000, vwap: 142.60, lastTradeTime: '2025-03-09T20:43:00Z' },
+  AAPL: { currentPrice: 228.15, dailyChange: 0.46, dailyChangePercent: 0.2, trend1D: trend1D(228.15, 0.2), trend5D: trend5D(228.15, 0.2), trend1M: trend1M(228.15, 0.2), volume: 48_000_000, relativeStrengthLabel: 'In line with SPX', bid: 228.12, ask: 228.18, open: 227.80, dayHigh: 228.50, dayLow: 227.20, prevClose: 227.69, volume4wAvg: 55_000_000, turnover: 10_951_200_000, vwap: 227.90, lastTradeTime: '2025-03-09T20:45:00Z' },
   MSFT: { currentPrice: 415.62, dailyChange: 2.49, dailyChangePercent: 0.6, trend1D: trend1D(415.62, 0.6), trend5D: trend5D(415.62, 0.6), trend1M: trend1M(415.62, 0.6), volume: 18_500_000, relativeStrengthLabel: 'Outperforming NDX +0.3%' },
   META: { currentPrice: 512.30, dailyChange: 6.15, dailyChangePercent: 1.2, trend1D: trend1D(512.30, 1.2), trend5D: trend5D(512.30, 1.2), trend1M: trend1M(512.30, 1.2), volume: 12_300_000, relativeStrengthLabel: 'Outperforming NDX +0.4%' },
   BABA: { currentPrice: 72.45, dailyChange: -1.55, dailyChangePercent: -2.1, trend1D: trend1D(72.45, -2.1), trend5D: trend5D(72.45, -2.1), trend1M: trend1M(72.45, -2.1), volume: 28_400_000, relativeStrengthLabel: 'Underperforming HSCEI -1.2%' },
@@ -173,19 +173,57 @@ export const STOCK_PRICE_BY_SYMBOL: Record<string, StockPriceData> = {
   COIN: { currentPrice: 248.20, dailyChange: 5.34, dailyChangePercent: 2.2, trend1D: trend1D(248.20, 2.2), trend5D: trend5D(248.20, 2.2), trend1M: trend1M(248.20, 2.2), volume: 15_000_000, relativeStrengthLabel: 'Crypto sector' },
 }
 
+export const SNAPSHOT_PERFORMANCE_BY_SYMBOL: Record<string, SnapshotPerformance> = {
+  NVDA: { week1: 2.1, month1: 8.5, ytd: 45.2, year1: 112.3, vsSector1y: 18.2, vsIndex1y: 25.4 },
+  AMD: { week1: -0.8, month1: 3.2, ytd: 12.1, year1: 35.6, vsSector1y: -2.1, vsIndex1y: 5.2 },
+  TSM: { week1: 1.2, month1: 5.8, ytd: 22.0, year1: 48.5, vsSector1y: 8.5, vsIndex1y: 12.1 },
+  AAPL: { week1: 0.5, month1: 2.1, ytd: 8.2, year1: 18.5, vsSector1y: 2.0, vsIndex1y: 4.1 },
+  MSFT: { week1: 0.8, month1: 4.2, ytd: 15.3, year1: 28.2, vsSector1y: 5.5, vsIndex1y: 8.2 },
+  META: { week1: 1.5, month1: 6.2, ytd: 28.5, year1: 42.1, vsSector1y: 10.2, vsIndex1y: 15.3 },
+  BABA: { week1: -2.5, month1: -5.2, ytd: -8.1, year1: 5.2, vsSector1y: -8.5, vsIndex1y: -4.2 },
+  TSLA: { week1: -1.2, month1: -3.5, ytd: 12.5, year1: 22.8, vsSector1y: -5.2, vsIndex1y: 2.1 },
+  SMCI: { week1: 4.2, month1: 15.8, ytd: 85.2, year1: 125.5, vsSector1y: 35.2, vsIndex1y: 42.1 },
+  AVGO: { week1: 0.6, month1: 3.5, ytd: 18.2, year1: 38.5, vsSector1y: 6.2, vsIndex1y: 10.5 },
+  GOOGL: { week1: 1.0, month1: 4.5, ytd: 12.8, year1: 25.2, vsSector1y: 4.5, vsIndex1y: 7.8 },
+  INTC: { week1: -0.5, month1: 1.2, ytd: 5.5, year1: 12.2, vsSector1y: -3.2, vsIndex1y: 0.5 },
+  JPM: { week1: 0.3, month1: 2.5, ytd: 10.2, year1: 22.5, vsSector1y: 4.2, vsIndex1y: 6.8 },
+  DIS: { week1: -0.8, month1: -1.5, ytd: 3.2, year1: 8.5, vsSector1y: -2.5, vsIndex1y: 1.2 },
+  NFLX: { week1: 1.2, month1: 5.5, ytd: 18.5, year1: 35.2, vsSector1y: 8.5, vsIndex1y: 12.2 },
+  COIN: { week1: 3.5, month1: 12.2, ytd: 45.5, year1: 85.2, vsSector1y: 25.5, vsIndex1y: 32.1 },
+}
+
+export const BROKER_CONSENSUS_BY_SYMBOL: Record<string, BrokerConsensus> = {
+  NVDA: { buyCount: 42, holdCount: 8, sellCount: 2, recommendation: 'Strong Buy', lastUpdated: '2025-03-08' },
+  AMD: { buyCount: 28, holdCount: 15, sellCount: 3, recommendation: 'Buy', lastUpdated: '2025-03-07' },
+  TSM: { buyCount: 22, holdCount: 4, sellCount: 0, recommendation: 'Strong Buy', lastUpdated: '2025-03-06' },
+  AAPL: { buyCount: 35, holdCount: 12, sellCount: 2, recommendation: 'Buy', lastUpdated: '2025-03-08' },
+  MSFT: { buyCount: 45, holdCount: 5, sellCount: 0, recommendation: 'Strong Buy', lastUpdated: '2025-03-08' },
+  META: { buyCount: 38, holdCount: 8, sellCount: 1, recommendation: 'Strong Buy', lastUpdated: '2025-03-07' },
+  BABA: { buyCount: 25, holdCount: 18, sellCount: 5, recommendation: 'Hold', lastUpdated: '2025-03-05' },
+  TSLA: { buyCount: 15, holdCount: 20, sellCount: 12, recommendation: 'Hold', lastUpdated: '2025-03-06' },
+  SMCI: { buyCount: 12, holdCount: 6, sellCount: 2, recommendation: 'Buy', lastUpdated: '2025-03-07' },
+  AVGO: { buyCount: 30, holdCount: 6, sellCount: 1, recommendation: 'Strong Buy', lastUpdated: '2025-03-08' },
+  GOOGL: { buyCount: 40, holdCount: 8, sellCount: 0, recommendation: 'Strong Buy', lastUpdated: '2025-03-08' },
+  INTC: { buyCount: 18, holdCount: 22, sellCount: 8, recommendation: 'Hold', lastUpdated: '2025-03-06' },
+  JPM: { buyCount: 22, holdCount: 10, sellCount: 2, recommendation: 'Buy', lastUpdated: '2025-03-07' },
+  DIS: { buyCount: 15, holdCount: 18, sellCount: 5, recommendation: 'Hold', lastUpdated: '2025-03-05' },
+  NFLX: { buyCount: 32, holdCount: 12, sellCount: 3, recommendation: 'Buy', lastUpdated: '2025-03-07' },
+  COIN: { buyCount: 18, holdCount: 10, sellCount: 6, recommendation: 'Hold', lastUpdated: '2025-03-06' },
+}
+
 export const COMPANY_FUNDAMENTALS_BY_SYMBOL: Record<string, CompanyFundamentals> = {
-  NVDA: { companyName: 'NVIDIA Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$2.25T', peRatio: 68.2, evEbitda: 52.1, week52Low: 685.2, week52High: 974.0, revenueGrowth: '+122% YoY', grossMargin: '74.2%', nextEarnings: 'May 22, 2025', beta: 1.72, dividendYield: '0.02%' },
-  AMD: { companyName: 'Advanced Micro Devices, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$288B', peRatio: 42.5, evEbitda: 28.3, week52Low: 138.5, week52High: 192.0, revenueGrowth: '+18% YoY', grossMargin: '50.1%', nextEarnings: 'Apr 30, 2025', beta: 1.65, dividendYield: null },
-  TSM: { companyName: 'Taiwan Semiconductor Manufacturing', exchange: 'NYSE', sector: 'Technology', industry: 'Semiconductors', marketCap: '$592B', peRatio: 24.8, evEbitda: 14.2, week52Low: 118.0, week52High: 158.5, revenueGrowth: '+22% YoY', grossMargin: '53.4%', nextEarnings: 'Apr 17, 2025', beta: 1.18, dividendYield: '1.8%' },
-  AAPL: { companyName: 'Apple Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', marketCap: '$3.52T', peRatio: 28.5, evEbitda: 22.1, week52Low: 198.0, week52High: 245.0, revenueGrowth: '+2% YoY', grossMargin: '44.1%', nextEarnings: 'May 1, 2025', beta: 1.28, dividendYield: '0.52%' },
-  MSFT: { companyName: 'Microsoft Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software—Infrastructure', marketCap: '$3.08T', peRatio: 35.2, evEbitda: 24.5, week52Low: 378.0, week52High: 430.0, revenueGrowth: '+12% YoY', grossMargin: '69.2%', nextEarnings: 'Apr 24, 2025', beta: 0.92, dividendYield: '0.74%' },
-  META: { companyName: 'Meta Platforms, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$1.31T', peRatio: 26.8, evEbitda: 14.8, week52Low: 435.0, week52High: 535.0, revenueGrowth: '+25% YoY', grossMargin: '81.2%', nextEarnings: 'Apr 30, 2025', beta: 1.22, dividendYield: '0.42%' },
-  BABA: { companyName: 'Alibaba Group Holding Limited', exchange: 'NYSE', sector: 'Consumer Cyclical', industry: 'E-commerce', marketCap: '$178B', peRatio: 12.5, evEbitda: 6.2, week52Low: 62.0, week52High: 95.0, revenueGrowth: '+5% YoY', grossMargin: '38.5%', nextEarnings: 'May 8, 2025', beta: 0.85, dividendYield: '1.2%' },
-  TSLA: { companyName: 'Tesla, Inc.', exchange: 'NASDAQ', sector: 'Consumer Cyclical', industry: 'Auto Manufacturers', marketCap: '$792B', peRatio: 72.5, evEbitda: 45.2, week52Low: 218.0, week52High: 299.0, revenueGrowth: '+19% YoY', grossMargin: '18.2%', nextEarnings: 'Apr 23, 2025', beta: 2.15, dividendYield: null },
-  SMCI: { companyName: 'Super Micro Computer, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Computer Hardware', marketCap: '$48B', peRatio: 28.2, evEbitda: 22.1, week52Low: 425.0, week52High: 965.0, revenueGrowth: '+88% YoY', grossMargin: '16.8%', nextEarnings: 'Apr 30, 2025', beta: 1.95, dividendYield: null },
-  AVGO: { companyName: 'Broadcom Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$758B', peRatio: 42.1, evEbitda: 18.5, week52Low: 125.0, week52High: 185.0, revenueGrowth: '+34% YoY', grossMargin: '59.2%', nextEarnings: 'Jun 12, 2025', beta: 1.42, dividendYield: '1.6%' },
-  GOOGL: { companyName: 'Alphabet Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$2.15T', peRatio: 26.2, evEbitda: 14.1, week52Low: 155.0, week52High: 182.0, revenueGrowth: '+10% YoY', grossMargin: '57.1%', nextEarnings: 'Apr 24, 2025', beta: 1.05, dividendYield: '0.52%' },
-  INTC: { companyName: 'Intel Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$178B', peRatio: 28.5, evEbitda: 8.2, week52Low: 38.0, week52High: 52.0, revenueGrowth: '+3% YoY', grossMargin: '45.2%', nextEarnings: 'Apr 24, 2025', beta: 1.12, dividendYield: '1.6%' },
+  NVDA: { companyName: 'NVIDIA Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$2.25T', peRatio: 68.2, evEbitda: 52.1, week52Low: 685.2, week52High: 974.0, revenueGrowth: '+122% YoY', grossMargin: '74.2%', nextEarnings: 'May 22, 2025', beta: 1.72, dividendYield: '0.02%', eps: 13.38, dps: 0.16, bookValuePerShare: 18.52, similarCompanies: 'AMD, AVGO, TSM', marketRank: 3, sectorRank: 1 },
+  AMD: { companyName: 'Advanced Micro Devices, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$288B', peRatio: 42.5, evEbitda: 28.3, week52Low: 138.5, week52High: 192.0, revenueGrowth: '+18% YoY', grossMargin: '50.1%', nextEarnings: 'Apr 30, 2025', beta: 1.65, dividendYield: null, eps: 4.19, dps: 0, bookValuePerShare: 22.15, similarCompanies: 'NVDA, INTC, AVGO', marketRank: 18, sectorRank: 3 },
+  TSM: { companyName: 'Taiwan Semiconductor Manufacturing', exchange: 'NYSE', sector: 'Technology', industry: 'Semiconductors', marketCap: '$592B', peRatio: 24.8, evEbitda: 14.2, week52Low: 118.0, week52High: 158.5, revenueGrowth: '+22% YoY', grossMargin: '53.4%', nextEarnings: 'Apr 17, 2025', beta: 1.18, dividendYield: '1.8%', eps: 5.76, dps: 2.57, bookValuePerShare: 28.42, similarCompanies: 'SMCI, ASML', marketRank: 10, sectorRank: 2 },
+  AAPL: { companyName: 'Apple Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', marketCap: '$3.52T', peRatio: 28.5, evEbitda: 22.1, week52Low: 198.0, week52High: 245.0, revenueGrowth: '+2% YoY', grossMargin: '44.1%', nextEarnings: 'May 1, 2025', beta: 1.28, dividendYield: '0.52%', eps: 8.01, dps: 1.19, bookValuePerShare: 4.82, similarCompanies: 'MSFT, GOOGL, META', marketRank: 1, sectorRank: 1 },
+  MSFT: { companyName: 'Microsoft Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software—Infrastructure', marketCap: '$3.08T', peRatio: 35.2, evEbitda: 24.5, week52Low: 378.0, week52High: 430.0, revenueGrowth: '+12% YoY', grossMargin: '69.2%', nextEarnings: 'Apr 24, 2025', beta: 0.92, dividendYield: '0.74%', eps: 11.81, dps: 3.08, bookValuePerShare: 22.15, similarCompanies: 'AAPL, GOOGL, AMZN', marketRank: 2, sectorRank: 1 },
+  META: { companyName: 'Meta Platforms, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$1.31T', peRatio: 26.8, evEbitda: 14.8, week52Low: 435.0, week52High: 535.0, revenueGrowth: '+25% YoY', grossMargin: '81.2%', nextEarnings: 'Apr 30, 2025', beta: 1.22, dividendYield: '0.42%', eps: 19.10, dps: 2.15, bookValuePerShare: 52.18, similarCompanies: 'GOOGL, NFLX, SNAP', marketRank: 6, sectorRank: 2 },
+  BABA: { companyName: 'Alibaba Group Holding Limited', exchange: 'NYSE', sector: 'Consumer Cyclical', industry: 'E-commerce', marketCap: '$178B', peRatio: 12.5, evEbitda: 6.2, week52Low: 62.0, week52High: 95.0, revenueGrowth: '+5% YoY', grossMargin: '38.5%', nextEarnings: 'May 8, 2025', beta: 0.85, dividendYield: '1.2%', eps: 5.79, dps: 0.87, bookValuePerShare: 42.15, similarCompanies: 'JD, PDD', marketRank: 45, sectorRank: 2 },
+  TSLA: { companyName: 'Tesla, Inc.', exchange: 'NASDAQ', sector: 'Consumer Cyclical', industry: 'Auto Manufacturers', marketCap: '$792B', peRatio: 72.5, evEbitda: 45.2, week52Low: 218.0, week52High: 299.0, revenueGrowth: '+19% YoY', grossMargin: '18.2%', nextEarnings: 'Apr 23, 2025', beta: 2.15, dividendYield: null, eps: 3.43, dps: 0, bookValuePerShare: 18.52, similarCompanies: 'RIVN, F, GM', marketRank: 7, sectorRank: 1 },
+  SMCI: { companyName: 'Super Micro Computer, Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Computer Hardware', marketCap: '$48B', peRatio: 28.2, evEbitda: 22.1, week52Low: 425.0, week52High: 965.0, revenueGrowth: '+88% YoY', grossMargin: '16.8%', nextEarnings: 'Apr 30, 2025', beta: 1.95, dividendYield: null, eps: 31.42, dps: 0, bookValuePerShare: 58.25, similarCompanies: 'DELL, HPE', marketRank: 125, sectorRank: 8 },
+  AVGO: { companyName: 'Broadcom Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$758B', peRatio: 42.1, evEbitda: 18.5, week52Low: 125.0, week52High: 185.0, revenueGrowth: '+34% YoY', grossMargin: '59.2%', nextEarnings: 'Jun 12, 2025', beta: 1.42, dividendYield: '1.6%', eps: 4.01, dps: 2.70, bookValuePerShare: 42.18, similarCompanies: 'NVDA, AMD, QCOM', marketRank: 8, sectorRank: 4 },
+  GOOGL: { companyName: 'Alphabet Inc.', exchange: 'NASDAQ', sector: 'Technology', industry: 'Internet Content & Information', marketCap: '$2.15T', peRatio: 26.2, evEbitda: 14.1, week52Low: 155.0, week52High: 182.0, revenueGrowth: '+10% YoY', grossMargin: '57.1%', nextEarnings: 'Apr 24, 2025', beta: 1.05, dividendYield: '0.52%', eps: 6.58, dps: 0.90, bookValuePerShare: 28.52, similarCompanies: 'META, AMZN, MSFT', marketRank: 4, sectorRank: 3 },
+  INTC: { companyName: 'Intel Corporation', exchange: 'NASDAQ', sector: 'Technology', industry: 'Semiconductors', marketCap: '$178B', peRatio: 28.5, evEbitda: 8.2, week52Low: 38.0, week52High: 52.0, revenueGrowth: '+3% YoY', grossMargin: '45.2%', nextEarnings: 'Apr 24, 2025', beta: 1.12, dividendYield: '1.6%', eps: 1.48, dps: 0.68, bookValuePerShare: 22.85, similarCompanies: 'AMD, TSM, QCOM', marketRank: 42, sectorRank: 6 },
   SPY: { companyName: 'SPDR S&P 500 ETF Trust', exchange: 'NYSE', sector: 'Financial', industry: 'ETF', marketCap: 'N/A', peRatio: null, evEbitda: null, week52Low: 480.0, week52High: 525.0, revenueGrowth: null, grossMargin: null, nextEarnings: null, beta: 1.0, dividendYield: '1.3%' },
   QQQ: { companyName: 'Invesco QQQ Trust', exchange: 'NASDAQ', sector: 'Financial', industry: 'ETF', marketCap: 'N/A', peRatio: null, evEbitda: null, week52Low: 420.0, week52High: 465.0, revenueGrowth: null, grossMargin: null, nextEarnings: null, beta: 1.05, dividendYield: '0.5%' },
   JPM: { companyName: 'JPMorgan Chase & Co.', exchange: 'NYSE', sector: 'Financial', industry: 'Banks', marketCap: '$570B', peRatio: 11.2, evEbitda: null, week52Low: 175.0, week52High: 205.0, revenueGrowth: '+8% YoY', grossMargin: null, nextEarnings: 'Apr 11, 2025', beta: 1.1, dividendYield: '2.2%' },
