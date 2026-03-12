@@ -304,7 +304,7 @@ export function CenterPanel({
                       className="flex items-center gap-1.5 text-xs text-accent-gold hover:underline"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
-                      Ask AI about this signal
+                      Ask StockClaw about this signal
                     </button>
                   )}
                 </div>
