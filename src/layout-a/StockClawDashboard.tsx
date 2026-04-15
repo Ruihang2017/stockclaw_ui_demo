@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { StatusStrip } from './components/StatusStrip'
@@ -10,93 +10,50 @@ import { RightPanel } from './components/RightPanel'
 import { SettingsModal } from './components/SettingsModal'
 import { HelpModal } from './components/HelpModal'
 import { ChatSlideOver } from './components/ChatSlideOver'
-import { WATCHLIST_BY_ID, MOCK_WATCHLISTS, MOCK_NOTIFICATIONS, ADDABLE_TICKERS, SIGNALS, MARKET_INDEXES, MARKET_PULSE_ITEMS } from './mockData'
-import type { FilterChipId, UserSettings, WatchlistTicker, WatchlistSettings, ChatContext, FeedFilters, FeedTimeRange } from './types'
+import {
+  WATCHLIST_BY_ID,
+  MOCK_WATCHLISTS,
+  MOCK_NOTIFICATIONS,
+  ADDABLE_TICKERS,
+  SIGNALS,
+  MARKET_INDEXES,
+  MARKET_PULSE_ITEMS,
+} from './mockData'
+import type { WatchlistTicker } from './types'
 import { useChat } from './context/ChatContext'
-import { DEFAULT_WATCHLIST_SETTINGS } from './types'
-
-function chipToFeedFilters(chipId: FilterChipId): Partial<FeedFilters> {
-  switch (chipId) {
-    case 'all':
-      return {}
-    case 'breaking':
-      return { urgency: 'BREAKING' }
-    case 'bullish':
-      return { sentiment: 'bullish' }
-    case 'bearish':
-      return { sentiment: 'bearish' }
-    case 'macro':
-      return { category: 'Macro' }
-    case 'earnings':
-      return { category: 'Earnings' }
-    case 'policy':
-      return { category: 'Policy' }
-    default:
-      return {}
-  }
-}
-
-function isWithinTimeRange(publishedAt: string, timeRange: FeedTimeRange): boolean {
-  const pub = new Date(publishedAt).getTime()
-  const now = Date.now()
-  const ms = timeRange === '24h' ? 24 * 60 * 60 * 1000 : timeRange === '7d' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000
-  return now - pub <= ms
-}
+import { useDashboardState, DEFAULT_WATCHLIST_SETTINGS } from './context/DashboardStateContext'
 
 export function StockClawDashboard() {
   const navigate = useNavigate()
   const { activeMessages, sendMessage, newChat } = useChat()
-  const [activeWatchlistId, setActiveWatchlistId] = useState<string>('swing')
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [helpOpen, setHelpOpen] = useState(false)
-  const [userSettings, setUserSettings] = useState<UserSettings>({
-    dateFormat: 'relative',
-    emailDigest: true,
-    push: false,
-    breakingOnly: false,
-  })
-  const [selectedTicker, setSelectedTicker] = useState<string | null>(null)
-  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(SIGNALS[0]?.id ?? null)
-  const [lang, setLang] = useState<'en' | 'zh'>('en')
-  const [activeFilter, setActiveFilter] = useState<FilterChipId>('all')
-  const [feedFilters, setFeedFilters] = useState<FeedFilters>({})
-  const [lastUpdated, setLastUpdated] = useState('8s ago')
-  const [watchlistEdits, setWatchlistEdits] = useState<Record<string, { removed: string[]; added: WatchlistTicker[]; order?: string[] }>>({})
-  const [watchlistNameOverrides, setWatchlistNameOverrides] = useState<Record<string, string>>({})
-  const [watchlistSettings, setWatchlistSettings] = useState<Record<string, WatchlistSettings>>({})
-  const [customWatchlists, setCustomWatchlists] = useState<{ id: string; name: string }[]>([])
-  const [pendingRenameWatchlistId, setPendingRenameWatchlistId] = useState<string | null>(null)
-  const [ragPrompt, setRagPrompt] = useState<string | null>(null)
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chatContext, setChatContext] = useState<ChatContext | null>(null)
-  const [pinnedSignalIds, setPinnedSignalIds] = useState<string[]>(() => {
-    try {
-      const s = localStorage.getItem('stockclaw_pinned')
-      return s ? JSON.parse(s) : []
-    } catch { return [] }
-  })
-  const [readSignalIds, setReadSignalIds] = useState<string[]>(() => {
-    try {
-      const s = localStorage.getItem('stockclaw_read')
-      return s ? JSON.parse(s) : []
-    } catch { return [] }
-  })
-  const [feedListView, setFeedListView] = useState<'all' | 'unread' | 'pinned'>('all')
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'urgency' | 'impact'>(() => {
-    try {
-      const s = localStorage.getItem('stockclaw_feed_preferences')
-      const p = s ? JSON.parse(s) : null
-      return (p?.sortBy === 'oldest' || p?.sortBy === 'urgency' || p?.sortBy === 'impact') ? p.sortBy : 'newest'
-    } catch { return 'newest' }
-  })
-  const [feedViewMode, setFeedViewMode] = useState<'list' | 'grid'>(() => {
-    try {
-      const s = localStorage.getItem('stockclaw_feed_preferences')
-      const p = s ? JSON.parse(s) : null
-      return p?.feedViewMode === 'grid' ? 'grid' : 'list'
-    } catch { return 'list' }
-  })
+  const {
+    activeWatchlistId, setActiveWatchlistId,
+    watchlistEdits, setWatchlistEdits,
+    watchlistNameOverrides, setWatchlistNameOverrides,
+    watchlistSettings, setWatchlistSettings,
+    customWatchlists,
+    pendingRenameWatchlistId, setPendingRenameWatchlistId,
+    selectedTicker, setSelectedTicker,
+    selectedSignalId, setSelectedSignalId,
+    pinnedSignalIds, readSignalIds,
+    activeFilter, feedFilters, setFeedFilters,
+    feedListView, setFeedListView,
+    sortBy, feedViewMode,
+    userSettings, setUserSettings,
+    lang, setLang,
+    lastUpdated,
+    ragPrompt, setRagPrompt,
+    chatContext, setChatContext,
+    chatOpen, setChatOpen,
+    helpOpen, setHelpOpen,
+    notificationsOpen, setNotificationsOpen,
+    isWithinTimeRange,
+    addWatchlist, deleteWatchlist,
+    handleFilterChange, handleClearFilters,
+    handlePin, handleMarkRead,
+    handleSortByChange, handleFeedViewModeChange,
+    handleRefresh, handleAskAI, handleAskAboutSignal, handleChatClose,
+  } = useDashboardState()
 
   const baseWatchlistData = WATCHLIST_BY_ID[activeWatchlistId]
   const watchlistSummary = baseWatchlistData?.summary ?? {
@@ -141,35 +98,6 @@ export function StockClawDashboard() {
     [watchlistNameOverrides, customWatchlists]
   )
 
-  const handleAddWatchlist = () => {
-    const id = `custom-${Date.now()}`
-    setCustomWatchlists((prev) => [...prev, { id, name: 'New Watchlist' }])
-    setActiveWatchlistId(id)
-    setPendingRenameWatchlistId(id)
-  }
-
-  const handleDeleteWatchlist = (id: string) => {
-    setCustomWatchlists((prev) => prev.filter((w) => w.id !== id))
-    if (activeWatchlistId === id) {
-      setActiveWatchlistId(MOCK_WATCHLISTS[0]?.id ?? 'swing')
-    }
-    setWatchlistNameOverrides((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    setWatchlistSettings((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    setWatchlistEdits((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-  }
-
   const addableTickers = useMemo(
     () => ADDABLE_TICKERS.filter((t) => !displayTickers.some((d) => d.symbol === t.symbol)),
     [displayTickers]
@@ -206,30 +134,8 @@ export function StockClawDashboard() {
     })
   }
 
-  const handleAskAI = (query: string, ticker?: string) => {
-    setRagPrompt(query)
-    if (ticker) setChatContext({ type: 'ticker', symbol: ticker })
-    setChatOpen(true)
-  }
-
-  const handleAskAboutSignal = (signalId: string, summary?: string) => {
-    setChatContext({ type: 'signal', signalId, summary })
-    setRagPrompt('Explain this signal in more detail')
-    setChatOpen(true)
-  }
-
   const handleSearchSubmit = (query: string) => {
     navigate('/chat', { state: { initialQuery: query } })
-  }
-
-  const handleChatClose = () => {
-    setChatOpen(false)
-    setChatContext(null)
-  }
-
-  const handleRefresh = () => {
-    setLastUpdated('just now')
-    setTimeout(() => setLastUpdated('8s ago'), 2500)
   }
 
   const filteredSignals = useMemo(() => {
@@ -244,59 +150,13 @@ export function StockClawDashboard() {
     if (feedFilters.source) list = list.filter((s) => s.source === feedFilters.source)
     if (feedFilters.timeRange) list = list.filter((s) => isWithinTimeRange(s.publishedAt, feedFilters.timeRange!))
     return list
-  }, [selectedTicker, feedFilters])
-
-  const handleFilterChange = (chipId: FilterChipId) => {
-    setActiveFilter(chipId)
-    setFeedFilters((prev) => ({ ...prev, ...chipToFeedFilters(chipId) }))
-  }
-
-  const handleClearFilters = () => {
-    setActiveFilter('all')
-    setFeedFilters({})
-    setSelectedTicker(null)
-  }
-
-  const handlePin = (signalId: string) => {
-    setPinnedSignalIds((prev) => {
-      const next = prev.includes(signalId) ? prev.filter((id) => id !== signalId) : [...prev, signalId]
-      try { localStorage.setItem('stockclaw_pinned', JSON.stringify(next)) } catch {}
-      return next
-    })
-  }
-
-  const handleMarkRead = (signalId: string) => {
-    setReadSignalIds((prev) => {
-      const next = prev.includes(signalId) ? prev.filter((id) => id !== signalId) : [...prev, signalId]
-      try { localStorage.setItem('stockclaw_read', JSON.stringify(next)) } catch {}
-      return next
-    })
-  }
+  }, [selectedTicker, feedFilters, isWithinTimeRange])
 
   const signalsAfterListView = useMemo(() => {
     if (feedListView === 'unread') return filteredSignals.filter((s) => !readSignalIds.includes(s.id))
     if (feedListView === 'pinned') return filteredSignals.filter((s) => pinnedSignalIds.includes(s.id))
     return filteredSignals
   }, [filteredSignals, feedListView, readSignalIds, pinnedSignalIds])
-
-  const persistFeedPreferences = (updates: { sortBy?: typeof sortBy; feedViewMode?: typeof feedViewMode }) => {
-    try {
-      const s = localStorage.getItem('stockclaw_feed_preferences')
-      const p = s ? JSON.parse(s) : {}
-      const next = { ...p, ...updates }
-      localStorage.setItem('stockclaw_feed_preferences', JSON.stringify(next))
-    } catch {}
-  }
-
-  const handleSortByChange = (v: 'newest' | 'oldest' | 'urgency' | 'impact') => {
-    setSortBy(v)
-    persistFeedPreferences({ sortBy: v })
-  }
-
-  const handleFeedViewModeChange = (v: 'list' | 'grid') => {
-    setFeedViewMode(v)
-    persistFeedPreferences({ feedViewMode: v })
-  }
 
   const feedFilterOptions = useMemo(() => {
     const agents = new Set<string>()
@@ -322,8 +182,8 @@ export function StockClawDashboard() {
       <Header
         newSignalsCount={watchlistSummary.signalsToday}
         lang={lang}
-        onLangToggle={() => setLang((l) => (l === 'en' ? 'zh' : 'en'))}
-        onOpenSettings={() => setSettingsOpen(true)}
+        onLangToggle={() => setLang(lang === 'en' ? 'zh' : 'en')}
+        onOpenSettings={() => { /* legacy handler, replaced in AppShell refactor */ }}
         onOpenNotifications={() => setNotificationsOpen((o) => !o)}
         onOpenHelp={() => setHelpOpen(true)}
         onOpenChat={() => navigate('/chat')}
@@ -353,12 +213,12 @@ export function StockClawDashboard() {
           watchlistOptions={watchlistOptionsWithOverrides}
           activeWatchlistId={activeWatchlistId}
           onWatchlistSelect={setActiveWatchlistId}
-          onAddWatchlist={handleAddWatchlist}
+          onAddWatchlist={addWatchlist}
           onRenameWatchlist={(id, newName) => setWatchlistNameOverrides((prev) => ({ ...prev, [id]: newName }))}
           pendingRenameWatchlistId={pendingRenameWatchlistId}
           onClearPendingRename={() => setPendingRenameWatchlistId(null)}
           canDeleteWatchlist={customWatchlists.some((w) => w.id === activeWatchlistId)}
-          onDeleteWatchlist={handleDeleteWatchlist}
+          onDeleteWatchlist={deleteWatchlist}
           watchlistSettings={watchlistSettings[activeWatchlistId] ?? DEFAULT_WATCHLIST_SETTINGS}
           onWatchlistSettingsSave={(id, s) => setWatchlistSettings((prev) => ({ ...prev, [id]: s }))}
           onReorderTicker={handleReorderTicker}
@@ -393,10 +253,10 @@ export function StockClawDashboard() {
         />
       </div>
 
-      {settingsOpen && (
+      {false && (
         <SettingsModal
-          isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
+          isOpen={false}
+          onClose={() => { /* legacy - now SettingsTab */ }}
           lang={lang}
           onLangChange={setLang}
           dateFormat={userSettings.dateFormat}
