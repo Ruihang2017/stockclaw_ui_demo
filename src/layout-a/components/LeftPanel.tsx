@@ -44,6 +44,7 @@ interface LeftPanelProps {
   onWatchlistSettingsSave?: (id: string, settings: WatchlistSettings) => void
   onReorderTicker?: (newOrder: string[]) => void
   onAskAI?: (query: string, ticker?: string) => void
+  variant?: 'sidebar' | 'full'
 }
 
 const FILTER_CHIPS: { id: FilterChipId; label: string }[] = [
@@ -247,6 +248,7 @@ export function LeftPanel({
   onWatchlistSettingsSave,
   onReorderTicker,
   onAskAI,
+  variant = 'sidebar',
 }: LeftPanelProps) {
   const [addDropdownOpen, setAddDropdownOpen] = useState(false)
   const [watchlistDropdownOpen, setWatchlistDropdownOpen] = useState(false)
@@ -336,7 +338,11 @@ export function LeftPanel({
   }
 
   return (
-    <aside className="flex w-full flex-shrink-0 flex-col border-r border-charcoal-600 bg-charcoal-900 md:min-w-[280px] md:max-w-[300px]">
+    <aside className={`flex w-full flex-shrink-0 flex-col bg-charcoal-900 ${
+      variant === 'sidebar'
+        ? 'border-r border-charcoal-600 md:min-w-[280px] md:max-w-[300px]'
+        : 'h-full overflow-y-auto'
+    }`}>
       {/* Watchlist selector: primary dropdown to change watchlist */}
       <div className="border-b border-charcoal-600 p-3">
         <p className="mb-1 text-[10px] uppercase text-gray-500">Watchlist</p>
