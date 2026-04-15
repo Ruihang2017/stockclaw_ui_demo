@@ -18,6 +18,10 @@ import {
   SIGNALS,
   MARKET_INDEXES,
   MARKET_PULSE_ITEMS,
+  STOCK_PRICE_BY_SYMBOL,
+  COMPANY_FUNDAMENTALS_BY_SYMBOL,
+  SNAPSHOT_PERFORMANCE_BY_SYMBOL,
+  BROKER_CONSENSUS_BY_SYMBOL,
 } from './mockData'
 import type { WatchlistTicker } from './types'
 import { useChat } from './context/ChatContext'
@@ -176,6 +180,10 @@ export function StockClawDashboard() {
   )
 
   const displayTicker = selectedTicker ?? selectedSignal?.tickers?.[0] ?? null
+  const detailStockPrice = displayTicker ? STOCK_PRICE_BY_SYMBOL[displayTicker] ?? null : null
+  const detailFundamentals = displayTicker ? COMPANY_FUNDAMENTALS_BY_SYMBOL[displayTicker] ?? null : null
+  const detailPerformance = displayTicker ? SNAPSHOT_PERFORMANCE_BY_SYMBOL[displayTicker] ?? null : null
+  const detailBrokerConsensus = displayTicker ? BROKER_CONSENSUS_BY_SYMBOL[displayTicker] ?? null : null
 
   return (
     <div className="flex h-screen flex-col bg-charcoal-950 text-gray-200">
@@ -247,6 +255,11 @@ export function StockClawDashboard() {
           onFeedViewModeChange={handleFeedViewModeChange}
           selectedSignal={selectedSignal}
           onAskAboutSignal={handleAskAboutSignal}
+          detailDisplayTicker={displayTicker}
+          detailStockPrice={detailStockPrice}
+          detailFundamentals={detailFundamentals}
+          detailPerformance={detailPerformance}
+          detailBrokerConsensus={detailBrokerConsensus}
         />
         <RightPanel
           displayTicker={displayTicker}
