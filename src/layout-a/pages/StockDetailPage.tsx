@@ -16,7 +16,7 @@ export function StockDetailPage() {
   const brokerConsensus = displayTicker ? BROKER_CONSENSUS_BY_SYMBOL[displayTicker] ?? null : null
 
   return (
-    <div className="flex min-h-screen flex-col bg-charcoal-950 text-gray-200">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <header className="flex shrink-0 items-center gap-3 border-b border-charcoal-600 bg-charcoal-900 px-4 py-3">
         <Link
           to="/"
